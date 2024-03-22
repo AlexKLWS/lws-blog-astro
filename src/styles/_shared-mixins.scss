@@ -1,0 +1,86 @@
+@mixin transition-ease {
+  transition: all 0.2s ease-in-out;
+}
+
+@mixin normal-mono {
+  font-family: IBM Plex Mono;
+  font-style: normal;
+  font-weight: 400;
+}
+
+@mixin normal {
+  font-family: Mulish, OpenSans;
+  font-style: normal;
+  line-height: 27px;
+  font-weight: 400;
+}
+
+@mixin title {
+  @include normal-mono;
+  font-weight: 1000;
+  font-size: 28px;
+  text-align: center;
+  margin: 0px;
+  color: $primary-color;
+  padding: 36px 0px;
+}
+
+@mixin input-mixin {
+  @include normal-mono;
+  padding: 10px 15px;
+  font-size: 16px;
+  border-width: 1px;
+  border-color: $thin-black-color;
+
+  &:focus {
+    border-color: $primary-color;
+    border-width: 1px;
+    outline: none;
+  }
+}
+
+@mixin button {
+  @include transition-ease;
+  font-family: IBM Plex Mono;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 23px;
+  text-decoration: none;
+  color: $primary-color;
+  padding: 5px 10px;
+  cursor: pointer;
+  display: flex;
+
+  &:hover {
+    background-color: $secondary-color;
+  }
+
+  &:active {
+    background-color: $secondary-color-active;
+  }
+}
+
+@mixin dotted-background {
+  background-image: -moz-linear-gradient(45deg, #666 25%, transparent 25%),
+    -moz-linear-gradient(-45deg, #666 25%, transparent 25%), -moz-linear-gradient(45deg, transparent 75%, #666 75%),
+    -moz-linear-gradient(-45deg, transparent 75%, #666 75%);
+  background-image: -webkit-gradient(linear, 0 100%, 100% 0, color-stop(0.25, #666), color-stop(0.25, transparent)),
+    -webkit-gradient(linear, 0 0, 100% 100%, color-stop(0.25, #666), color-stop(0.25, transparent)),
+    -webkit-gradient(linear, 0 100%, 100% 0, color-stop(0.75, transparent), color-stop(0.75, #666)),
+    -webkit-gradient(linear, 0 0, 100% 100%, color-stop(0.75, transparent), color-stop(0.75, #666));
+  background-image: -webkit-linear-gradient(45deg, #666 25%, transparent 25%),
+    -webkit-linear-gradient(-45deg, #666 25%, transparent 25%),
+    -webkit-linear-gradient(45deg, transparent 75%, #666 75%),
+    -webkit-linear-gradient(-45deg, transparent 75%, #666 75%);
+  background-image: -o-linear-gradient(45deg, #666 25%, transparent 25%),
+    -o-linear-gradient(-45deg, #666 25%, transparent 25%), -o-linear-gradient(45deg, transparent 75%, #666 75%),
+    -o-linear-gradient(-45deg, transparent 75%, #666 75%);
+  background-image: linear-gradient(45deg, #666 25%, transparent 25%),
+    linear-gradient(-45deg, #666 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #666 75%),
+    linear-gradient(-45deg, transparent 75%, #666 75%);
+  -moz-background-size: 2px 2px;
+  background-size: 2px 2px;
+  -webkit-background-size: 2px 2.1px; /* override value for webkit */
+  background-position: 0 0, 1px 0, 1px -1px, 0px 1px;
+}

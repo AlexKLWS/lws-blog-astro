@@ -1,0 +1,181 @@
+---
+import routes from '../consts/routes'
+import { Image } from 'astro:assets'
+import profilePic from '../assets/square_1.jpg'
+
+const getLinkStyle = (route: string) => {
+  const currentRoute = Astro.url.pathname
+  return route === currentRoute ? 'active-section-item' : 'section-item'
+}
+---
+
+<header>
+  <nav>
+    <div class={'header-top-container'}>
+      <a href={routes.home} class={'header-title'}> LONG WINTER SHADOWS </a>
+      <div class={'header-right-container'}>
+        <span class={'header-subtitle'}>Personal blog by</span>
+        <a href={routes.contact} class={'header-subtitle-link'}> Alex Korzh </a>
+        <a href={routes.contact} class={'header-portrait'}>
+          <Image src={profilePic} width='44' height='44' alt='Alex Korzh Portrait' />
+        </a>
+      </div>
+    </div>
+    <!-- <div class={'dropdown-container'}>
+      <Dropdown dropdownTriggerText={getDropdownLabel(router.pathname)} items={dropdownItems} />
+    </div> -->
+    <nav class={'section-list'}>
+      <a href={routes.life} class={getLinkStyle(routes.life)}> Life </a>
+      <a href={routes.code} class={getLinkStyle(routes.code)}> Code </a>
+      <a href={routes.guides} class={getLinkStyle(routes.guides)}> Guides </a>
+      <a href={routes.projects} class={getLinkStyle(routes.projects)}> Projects </a>
+      <a href={routes.games} class={getLinkStyle(routes.games)}> Games </a>
+    </nav>
+  </nav>
+</header>
+
+<style lang='scss'>
+  @import '../styles/global';
+
+  .header-title {
+    @include normal-mono;
+    font-weight: 1000;
+    font-size: 28px;
+    text-align: center;
+    color: $primary-color;
+    margin-top: 3px;
+    margin-left: 7px;
+    text-decoration: none;
+    border-width: 1px;
+    border-color: $white-color;
+    border-style: solid;
+
+    &:focus {
+      border-color: $secondary-color;
+      border-width: 1px;
+      outline: none;
+    }
+  }
+
+  .header-top-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    justify-content: space-between;
+    padding: 36px 0px;
+    border-bottom: $thin-black-color 1px solid;
+
+    @media (min-width: $breakpoint-desktop-or-laptop) {
+      flex-direction: row;
+    }
+  }
+
+  .header-right-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    @media (min-width: $breakpoint-desktop-or-laptop) {
+      flex-direction: row;
+    }
+  }
+
+  %header-subtitle-shared {
+    @include normal-mono;
+    font-weight: 300;
+    font-size: 11px;
+    text-align: center;
+    color: $primary-color;
+    margin-right: 0.5em;
+    margin-top: 15px;
+
+    @media (min-width: $breakpoint-desktop-or-laptop) {
+      flex-direction: row;
+      margin-top: 0px;
+    }
+  }
+
+  .header-subtitle {
+    @extend %header-subtitle-shared;
+  }
+
+  .header-subtitle-link {
+    @extend %header-subtitle-shared;
+    margin-top: 5px;
+    border-width: 1px;
+    border-color: $white-color;
+    border-style: solid;
+
+    &:visited {
+      color: $primary-color;
+    }
+
+    &:focus {
+      border-color: $secondary-color;
+      border-width: 1px;
+      outline: none;
+    }
+    @media (min-width: $breakpoint-desktop-or-laptop) {
+      margin-top: 0px;
+    }
+  }
+
+  .header-portrait {
+    overflow: hidden;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    -webkit-border-radius: 50%;
+    -moz-border-radius: 50%;
+  }
+
+  .dropdown-container {
+    padding-top: 12px;
+    margin-bottom: 36px;
+  }
+
+  .section-list {
+    display: flex;
+    padding-top: 12px;
+    justify-content: space-between;
+    margin-bottom: 36px;
+
+    @media (min-width: $breakpoint-desktop-or-laptop) {
+      justify-content: flex-start;
+    }
+  }
+
+  %section-item-shared {
+    @include button;
+    font-size: 15px;
+    border-width: 1px;
+    border-color: $white-color;
+    border-style: solid;
+
+    &:focus {
+      border-color: $secondary-color;
+      border-width: 1px;
+      outline: none;
+    }
+
+    @media (min-width: $breakpoint-desktop-or-laptop) {
+      font-size: 18px;
+      line-height: 23px;
+      margin-right: 64px;
+    }
+  }
+
+  .section-item {
+    @extend %section-item-shared;
+  }
+
+  .active-section-item {
+    @extend %section-item-shared;
+    color: $white-color;
+    background-color: $primary-color;
+
+    &:hover {
+      background-color: $primary-color;
+    }
+  }
+</style>
