@@ -127,6 +127,10 @@ const getLinkStyle = (route: string) => {
     border-radius: 50%;
     -webkit-border-radius: 50%;
     -moz-border-radius: 50%;
+    visibility: hidden;
+    @media (min-width: 1024px) {
+      visibility: visible;
+    }
   }
 
   .dropdown-container {

@@ -79,8 +79,8 @@ const draw = (ctx) => {
 const canvas = document.getElementById('canvas')
 const ctx = canvas?.getContext('2d')
 ctx.imageSmoothingEnabled = false
-ctx.canvas.width = window.innerWidth
-ctx.canvas.height = window.innerHeight + 200
+ctx.canvas.width = window.innerWidth + 100
+ctx.canvas.height = window.innerHeight + 400
 draw(ctx)
 const handleResize = () => {
   draw(ctx)

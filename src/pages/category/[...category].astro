@@ -1,0 +1,36 @@
+---
+import Layout from '../../layouts/Layout.astro'
+
+export async function getStaticPaths() {
+  const pages = [
+    {
+      category: 'life',
+      title: 'Astro LIFE',
+      text: 'Welcome to the Astro LIFE!',
+    },
+    {
+      category: 'code',
+      title: 'Astro CODE',
+      text: 'Welcome to the Astro CODE!',
+    },
+  ]
+  return pages.map(({ category, title, text }) => {
+    return {
+      params: { category },
+      props: { title, text },
+    }
+  })
+}
+
+const { title, text } = Astro.props
+---
+
+<Layout title={title}>
+  <head>
+    <title>{title}</title>
+  </head>
+  <body>
+    <h1>{title}</h1>
+    <p>{text}</p>
+  </body>
+</Layout>
