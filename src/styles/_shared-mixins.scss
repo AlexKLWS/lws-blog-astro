@@ -3,13 +3,13 @@
 }
 
 @mixin normal-mono {
-  font-family: IBM Plex Mono;
+  font-family: 'IBM Plex Mono';
   font-style: normal;
   font-weight: 400;
 }
 
 @mixin normal {
-  font-family: Mulish, OpenSans;
+  font-family: 'Mulish Variable', 'Open Sans Variable';
   font-style: normal;
   line-height: 27px;
   font-weight: 400;
@@ -41,7 +41,7 @@
 
 @mixin button {
   @include transition-ease;
-  font-family: IBM Plex Mono;
+  font-family: 'IBM Plex Mono';
   font-style: normal;
   font-weight: 600;
   font-size: 18px;
