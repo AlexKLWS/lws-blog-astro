@@ -1,3 +1,13 @@
+---
+title: 'Dependency Injection in React Native using Typescript + Inversify + RxJS'
+subtitle: 'SOLIDify your system architecture'
+pubDate: 2021-07-05
+metaDescription: 'Dependency Injection in React Native using Typescript + Inversify + RxJS + SOLID'
+icon: 'react'
+tags: ['code']
+private: false
+---
+
 The patterns and approaches discussed in this post could be considered rather advanced, so I tried my best to be as elaborate and clear as possible. Please let me know if you have any thoughts on how to improve this post!
 
 ### Motivation
@@ -12,7 +22,14 @@ It is of the utmost importance that we plan out our app system architecture as e
 
 In short, DI is great. [OOP](https://en.wikipedia.org/wiki/Object-oriented_programming) is great. [SOLID](https://en.wikipedia.org/wiki/SOLID) is great. Those are facts, proven by software developed in the past decades. If you are unfamiliar with these terms, it is very important that you make an effort to learn and truly understand them before implementing the pattern described in this post. I recommend [Robert C. Martin's Clean Code](https://www.oreilly.com/library/view/clean-code-a/9780136083238/) as one of the best books on using SOLID in real life. I think [Object-Oriented Thought Process](https://www.oreilly.com/library/view/the-object-oriented-thought/9780135182130/) is a great read as well. This video in my opinion is one of the best tutorials on DI out there, so make sure to check it out.
 
-<iframe width="100%" height="315" src="https://www.youtube-nocookie.com/embed/QtDTfn8YxXg" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe
+  width='100%'
+  height='315'
+  src='https://www.youtube-nocookie.com/embed/QtDTfn8YxXg'
+  frameborder='0'
+  allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
+  allowfullscreen
+></iframe>
 
 A good understanding of these concepts is very important. So without any further ado, I'll go through one of the most robust, effective and reliable approaches to organizing React Native app architecture. I've been using it in many of my projects and it has been working out **incredibly** well.
 
@@ -302,7 +319,7 @@ const useNameProvider = () => {
 
 And then, if you need something more sophisticated and flexible, the `onEmit`+`Subscription` setup could also be replaced with an array of callbacks stored inside the service.
 
-And that's pretty much all there's to it. Stay tuned for 🚀part 2🚀 where I'll go over the real-life use of this pattern. I sincerely hope you found this post useful. If you ever decide to try this approach in your projects, please let me know how did it work out for you! And again, if you have any thoughts or questions feel free to contact me as well.
+And that's pretty much all there's to it. Stay tuned for 🚀part 2🚀 where I'll go over the real-life use of this pattern. I hope you found this post useful. If you ever decide to try this approach in your projects, please let me know how did it work out for you! And again, if you have any thoughts or questions feel free to contact me as well.
 As always, thanks for reading! 🥳
 
 ---

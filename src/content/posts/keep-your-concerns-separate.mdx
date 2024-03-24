@@ -1,3 +1,13 @@
+---
+title: 'Keep your concerns separate'
+subtitle: 'Improve you React app architecture with this simple trick'
+pubDate: 2021-09-05
+metaDescription: 'Applying this simple pattern to React apps dramatically improves system architecture'
+icon: 'react'
+tags: ['code']
+private: false
+---
+
 I love [GraphQL](https://graphql.org), and I love [Apollo](https://www.apollographql.com). So much, that in one of my React Native projects I decided to make Apollo a single source of truth. Why, isn't this such a good idea - to make it so that Apollo's `useQuery`/`useMutation` interface is used to fetch/manipulate both remote data and data from a local store? Well, it turned out it isn't.
 Take a look at the following code. You can see, that it uses [redux](https://redux.js.org) to retrieve data from the local store and update it. It also uses Apollo query to fetch remote data.
 

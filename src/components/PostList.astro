@@ -1,0 +1,32 @@
+---
+import PostPreviewCard from './PostPreviewCard.astro'
+
+const { posts } = Astro.props
+---
+
+<div class='container'>
+  {
+    posts.map((post) => (
+      <PostPreviewCard
+        url={`/posts/${post.slug}/`}
+        title={post.data.title}
+        subtitle={post.data.subtitle}
+        icon={post.data.icon}
+      />
+    ))
+  }
+</div>
+
+<style lang='scss'>
+  @import '../styles/config';
+
+  .container {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 0.5rem;
+
+    @media (min-width: $breakpoint-lg) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>

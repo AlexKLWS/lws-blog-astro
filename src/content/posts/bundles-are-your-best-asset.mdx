@@ -1,12 +1,11 @@
 ---
-title: 'My First Blog Post'
-pubDate: 2022-07-01
-description: 'This is the first post of my new Astro blog.'
-author: 'Astro Learner'
-image:
-  url: 'https://docs.astro.build/assets/full-logo-light.png'
-  alt: 'The full Astro logo.'
-tags: ['astro', 'blogging', 'learning in public']
+title: 'Bundles are your best asset'
+subtitle: "Or why Unity's Resources system should never be used"
+pubDate: 2021-10-05
+metaDescription: "Why improper use of the Unity's Resources folder can bloat the size of a project’s build, lead to uncontrollable excessive memory utilization, and significantly increase application startup times"
+icon: 'react'
+tags: ['code', 'games']
+private: false
 ---
 
 Back in 2017, I was working in an indie game development studio. The team was small, but the project was quite ambitious - we were making a mobile MMORPG with AR features. At a certain point through the development, we've started encountering weird issues. First, even though the development was still in the early stages, the game's build size was growing at an alarming rate. At a certain point, it even reached 2.5 GB, which is quite significant for a mobile app. Large app size is a **huge** disadvantage in the App Store/Google Play world, so making our ipa/apk smaller was crucial. Second, we had to run the game on an actual mobile device each time we wanted to test certain AR features. As development progressed, the build times were getting longer and longer. And since, as I mentioned before, the builds themself were growing in size, they were taking longer to install on a device. The game was also taking at least 15 seconds to launch! The development had been slowed down significantly because of this, and things were getting worse and worse as we were adding more content. But we were still in the early stages of development, so we were planning on adding so much more! When we started looking for what was causing these issues, we found the source rather quickly. As you've probably already guessed, all these problems were because we relied on the resources folder. We had various kinds of weapons with different animations, lots of armor sets each made up of 4 parts, and many other assets. Players could also select from 6 fantasy races and 2 genders when creating their characters. All this content had to be loaded and unloaded dynamically, so it made sense to put it into the resources folder, right? Well, no, and boy was this a bad decision.

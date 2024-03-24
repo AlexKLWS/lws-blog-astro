@@ -1,3 +1,13 @@
+---
+title: 'Youtube audio streaming service'
+subtitle: "Not looking for easy solutions"
+pubDate: 2021-02-06
+metaDescription: ""
+icon: 'react'
+tags: ['code', 'projects']
+private: false
+---
+
 I think we can all agree that youtube ads are out of control. Sometimes it shows several ads in a row, sometimes at least one of them is unskippable and 30 seconds long, and sometimes there're just too many ad segments during a single video. I usually listen to DJ sets while I work, and I can't even put into words how annoying it is to listen to music when it constantly gets interrupted by an ad. And this is not all, the iOS app frequently displays irritating subscription banners and doesn't allow background audio playback without a subscription. All in all, if you don't have a premium/youtube music subscription, or if you don't use an ad-block, your experience is pretty terrible. This made me think: can I "fix" youtube so that I could listen to music without ads both on mobile and desktop? I have decided to make it a coding challenge for myself. Here's how it went. Before we begin, all sources are avaialable [here](https://github.com/AlexKLWS/youtube-audio-stream).
 
 ### Do not repeat this at home
@@ -9,6 +19,7 @@ The basic outline for this project came to me almost instantly. It had to be a w
 **Important!** The service requires FFmpeg installation to work! In my experience, it's best to install it via a package manager, i.g. homebrew on a mac.
 Compiling a binary is pretty straightforward. Run `$ go install` and `$ go build` to make a binary. Tested with go version 3.17.
 Binary requires a config.yml file to be present in the same folder to run. Here's what the configuration might look like:
+
 
 ```
 env: "debug"
@@ -33,6 +44,7 @@ Now I'll go in detail over what every config option means.
 - `output-directory` – Directory path where transmuxing output files are saved. Use `-o` command flag followed by the directory you want to use to override this option.
 - `source-directory` – Directory path where downloaded youtube files will be saved. It's called source as a "source files for transmuxing". Use `-s` command flag followed by the directory you want to use to override this option.
 - `completion-marker` – Completion marker file name. You can find what this is in _Transmuxing_ and _Anatomy of the request_ sections.
+
 
 The binary allows downloading the audio from youtube without launching the service. Simply run `$ ./{binary name} {video URL}`. The file is downloaded to the same folder as binary by default. Please mind that download functionality is pretty limited. The details of the download process are covered in the _Downloading section_.
 Run `$ ./{binary name} serve` to launch the service.
@@ -75,6 +87,7 @@ The next step is transmuxing the file we just downloaded into HLS format. For th
 ### Anatomy of a request
 
 As I mentioned above, the service uses echo for handling client requests. Once a client makes an empty get request to an endpoint, the server upgrades a connection to WebSockets. Next, a client sends a video URL using sockets. We extract a video id from the URL, construct an output file path using this id, and check for a completion marker file. As was mentioned previously, the existence of this file signifies that a video has already been downloaded and converted into HLS format, and is already available for streaming. If a completion marker exists, we notify the client and close the connection. Otherwise, we let the client know that the processing will begin. Next, we either create a new process handler for a video. If a process handler for that particular already exists at that point in time, we simply return the existing instance. I will go over how a process handler works in the next section. For now, it's important to note that from this point all that's left is to subscribe to the updates from the process handler and deliver them to a client. Here's what it looks like
+
 
 ```
 func DownloadAndProcessVideo(ctx echo.Context) error {
@@ -312,11 +325,11 @@ func removeFeed(videoID string) {
 
 ```
 
-Now, I'd like to provide a little bit of context. Progress feeds allow to intelligently manage multiple video processes. If one client initiates a video processing, and then another client attempts to process the same video, an existing process will be used. The second client will receive all the same updates as the first client starting from the point it made the request. For example, if the first client has initiated a download, and by the time the second client made a request 50% has already been downloaded, the second client will receive updates for download progress for 51% and up. Also, if any or all clients disconnect, the updates will still be delivered, because, as I have mentioned before, `Send` is non-blocking and doesn't sync data between channels. However, this leads to a situation when we might end up with "stale" channels when a client has disconnected, but the channel still exists and still awaits for the data to be "popped" by <- operator. Thankfully, we handle this when we close the feed by making sure every channel is "empty" before we close it. To sum up, a process is initiated and runs in a "detached" manner. It allows subscribing and unsubscribing to updates on the progress of the video processing at any point in time.
+Now, I'd like to provide a little bit of context. Progress feeds allow to intelligently manage multiple video processes. If one client initiates a video processing, and then another client attempts to process the same video, an existing process will be used. The second client will receive all the same updates as the first client starting from the point it made the request. For example, if the first client has initiated a download, and by the time the second client made a request 50% has already been downloaded, the second client will receive updates for download progress for 51% and up. Also, if any or all clients disconnect, the updates will still be delivered, because, as I have mentioned before, `Send` is non-blocking and doesn't sync data between channels. However, this leads to a situation when we might end up with "stale" channels when a client has disconnected, but the channel still exists and still awaits for the data to be "popped" by {'<-'} operator. Thankfully, we handle this when we close the feed by making sure every channel is "empty" before we close it. To sum up, a process is initiated and runs in a "detached" manner. It allows subscribing and unsubscribing to updates on the progress of the video processing at any point in time.
 
 ### Conclusion
 
 And that's pretty much all that there's to it. In the end, I'm pretty proud of this project. It was so much fun to research youtube player internals. I also enjoyed designing the progress update feed and process handler quite a lot.
-Feel free to use my code for your own personal projects, and let me know if you have any ideas or suggestions. You can reach out to me using email. And here's a link to the [project repo](https://github.com/AlexKLWS/youtube-audio-stream) again.
+Feel free to use my code for your own personal projects, and let me know if you have any ideas or suggestions. You can reach out to me via email. And here's a link to the [project repo](https://github.com/AlexKLWS/youtube-audio-stream) again.
 
 _Thank you very much for reading!_
