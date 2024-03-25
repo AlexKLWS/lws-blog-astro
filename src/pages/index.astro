@@ -2,11 +2,20 @@
 import { getCollection } from 'astro:content'
 import Layout from '../layouts/Layout.astro'
 import PostList from '../components/PostList.astro'
+import { PAGE_SIZE } from '../consts/pagination'
+import routes from '../consts/routes'
 
-const pageTitle = 'My Astro Learning Blog'
+const pageTitle = 'LWS'
 const allPosts = await getCollection('posts')
+const firstPagePosts = allPosts.slice(0, PAGE_SIZE)
+const pageCount = Math.floor(allPosts.length / PAGE_SIZE)
 ---
 
 <Layout title={pageTitle}>
-  <PostList posts={allPosts} />
+  <PostList
+    posts={firstPagePosts}
+    pageNumber={pageCount > 1 ? 1 : undefined}
+    nextPageUrl={pageCount > 1 ? `${routes.pages}/1` : undefined}
+    lastPage={pageCount > 1 ? pageCount : undefined}
+  />
 </Layout>

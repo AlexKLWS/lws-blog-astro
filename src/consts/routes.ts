@@ -1,5 +1,6 @@
 const home = '/'
-const miscArticle = '/posts/:id'
+const postRoute = '/posts/view/'
+const pages = '/posts/'
 const life = '/tags/life'
 const code = '/tags/code'
 const guides = '/tags/guides'
@@ -9,8 +10,9 @@ const contact = '/contact'
 const login = '/login'
 
 export default {
+  postRoute,
+  pages,
   home,
-  miscArticle,
   life,
   code,
   games,

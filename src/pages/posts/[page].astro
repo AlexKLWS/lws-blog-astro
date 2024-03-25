@@ -1,0 +1,27 @@
+---
+import { getCollection } from 'astro:content'
+import PostList from '../../components/PostList.astro'
+import Layout from '../../layouts/Layout.astro'
+import { PAGE_SIZE } from '../../consts/pagination'
+
+import type { GetStaticPaths } from 'astro'
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const allPosts = await getCollection('posts')
+  return paginate(allPosts, {
+    pageSize: PAGE_SIZE,
+  })
+}) satisfies GetStaticPaths
+
+const { page } = Astro.props
+---
+
+<Layout title={'Hello'}>
+  <PostList
+    posts={page.data}
+    pageNumber={page.currentPage}
+    prevPageUrl={page.url.prev}
+    nextPageUrl={page.url.next}
+    lastPage={page.lastPage}
+  />
+</Layout>
