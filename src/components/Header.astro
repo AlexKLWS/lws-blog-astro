@@ -43,8 +43,8 @@ const getLinkStyle = (route: string) => {
     font-size: 28px;
     text-align: center;
     color: $primary-color;
-    margin-top: 3px;
-    margin-left: 7px;
+    margin-top: 0.2rem;
+    margin-left: 0.5rem;
     text-decoration: none;
     border-width: 1px;
     border-color: $white-color;
@@ -62,7 +62,7 @@ const getLinkStyle = (route: string) => {
     flex-direction: column;
     width: 100%;
     justify-content: space-between;
-    padding: 36px 0px;
+    padding: 2.25rem 0px;
     border-bottom: $thin-black-color 1px solid;
 
     @media (min-width: $breakpoint-lg) {
@@ -128,14 +128,14 @@ const getLinkStyle = (route: string) => {
     -webkit-border-radius: 50%;
     -moz-border-radius: 50%;
     visibility: hidden;
-    @media (min-width: 1024px) {
+    @media (min-width: $breakpoint-lg) {
       visibility: visible;
     }
   }
 
   .dropdown-container {
-    padding-top: 12px;
-    margin-bottom: 36px;
+    padding-top: 0.75rem;
+    margin-bottom: 2.25rem;
   }
 
   .section-list {
@@ -165,7 +165,7 @@ const getLinkStyle = (route: string) => {
     @media (min-width: $breakpoint-lg) {
       font-size: 18px;
       line-height: 23px;
-      margin-right: 64px;
+      margin-right: 4rem;
     }
   }
 

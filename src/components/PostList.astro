@@ -6,7 +6,7 @@ const { posts } = Astro.props
 
 <div class='container'>
   {
-    posts.map((post) => (
+    posts.map((post: any) => (
       <PostPreviewCard
         url={`/posts/${post.slug}/`}
         title={post.data.title}
