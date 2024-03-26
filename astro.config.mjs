@@ -8,6 +8,9 @@ export default defineConfig({
   redirects: {
     '/tags/[tag]': '/tags/[tag]/1',
   },
+  redirects: {
+    '/tags': '/tags/[tag]/1',
+  },
   markdown: {
     shikiConfig: {
       theme: 'night-owl',
