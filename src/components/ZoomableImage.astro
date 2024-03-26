@@ -1,0 +1,42 @@
+---
+import { Image } from 'astro:assets'
+
+const { url, alt, caption } = Astro.props
+---
+
+<div class='image-container'>
+  <Image id={'zoomable'} class={'zoomable-image'} src={url} alt={alt} />
+  {caption && <figcaption class='image-caption'>{alt}</figcaption>}
+</div>
+
+<style lang='scss'>
+  @import '../styles/config';
+  @import '../styles/shared-mixins';
+
+  .image-container {
+    padding: 1rem 0px;
+
+    @media (min-width: $breakpoint-lg) {
+      padding: 1.5rem 4rem;
+    }
+  }
+
+  .image-caption {
+    @include normal-mono;
+    text-align: center;
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+    color: $figcaption-color;
+  }
+
+  .zoomable-image {
+    max-width: 100%;
+    height: auto;
+  }
+</style>
+
+<script>
+  import mediumZoom from 'medium-zoom'
+
+  mediumZoom('#zoomable')
+</script>

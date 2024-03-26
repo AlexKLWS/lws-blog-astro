@@ -18,6 +18,21 @@ p {
   margin-inline-end: 0px;
 }
 
+.code-block {
+  padding: 0rem 0.5rem 1rem 0.5rem;
+
+  ::-moz-selection {
+    /* Code for Firefox */
+    color: inherit;
+    background: $code-select-color;
+  }
+
+  ::selection {
+    color: inherit;
+    background: $code-select-color;
+  }
+}
+
 .app-external-link {
   color: $primary-color;
   text-decoration: none;

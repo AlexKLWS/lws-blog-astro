@@ -8,11 +8,14 @@ tags: ['code']
 private: false
 ---
 
+import { Code } from 'astro:components';
+
+
 I love [GraphQL](https://graphql.org), and I love [Apollo](https://www.apollographql.com). So much, that in one of my React Native projects I decided to make Apollo a single source of truth. Why, isn't this such a good idea - to make it so that Apollo's `useQuery`/`useMutation` interface is used to fetch/manipulate both remote data and data from a local store? Well, it turned out it isn't.
 Take a look at the following code. You can see, that it uses [redux](https://redux.js.org) to retrieve data from the local store and update it. It also uses Apollo query to fetch remote data.
 
-```
 
+<Code class='code-block' code={`
 const Dogs = (props) => {
   const [someInputValue, setSomeInputValue] = useState('')
 
@@ -29,11 +32,11 @@ const Dogs = (props) => {
   }
 
   if (loading) return 'Loading...'
-  if (error) return `Error! ${error.message}`
+  if (error) return \`Error! \${error.message}\`
 
   return (
     <div>
-      <h3>{`Persisted dog breed: ${props.persistedDog}`}</h3>
+      <h3>{\`Persisted dog breed: \${props.persistedDog}\`}</h3>
       <input placeholder='some input' value={someInputValue} onChange={onSomeInputValueChange} />
       <select name='dog' onChange={onDogSelected}>
         {data.dogs.map((dog) => (
@@ -61,11 +64,12 @@ function mapDispatchToProps(dispatch) {
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Dogs)
-```
+`} lang="jsx" theme={'night-owl'} />
+
 
 Here's what I decided to do. Using Apollo's local resolvers (now a deprecated feature), I made it handle both local store data retrievals and updates. This made the component much nicer to look at.
 
-```
+<Code class='code-block' code={`
 const Dogs = () => {
   const [someInputValue, setSomeInputValue] = useState('')
 
@@ -84,11 +88,11 @@ const Dogs = () => {
   }
 
   if (loading) return 'Loading...'
-  if (error) return `Error! ${error.message}`
+  if (error) return \`Error! \${error.message}\`
 
   return (
     <div>
-      <h3>{`Persisted dog breed: ${persistedDogData.data.persistedDog}`}</h3>
+      <h3>{\`Persisted dog breed: \${persistedDogData.data.persistedDog}\`}</h3>
       <input placeholder='some input' value={someInputValue} onChange={onSomeInputValueChange} />
       <select name='dog' onChange={onDogSelected}>
         {data.dogs.map((dog) => (
@@ -102,31 +106,31 @@ const Dogs = () => {
 }
 
 export default Dogs
-```
+`} lang="jsx" theme={'night-owl'} />
 
 Whether data is remote or local, the only way the component obtains it is via queries, and the only way the component updates data is via mutations. As you can see, the nice thing about this is that we handle local operations in pretty much exactly the same manner as remote. However, a big disadvantage of this approach is that we handle local operations in pretty much exactly the same manner as remote... Wait, what? Let's take a deeper look. First, we need to write a GraphQl query for every local operation.
 
-```
+<Code class='code-block' code={`
 import gql from 'graphql-tag'
 
-export const GET_PERSISTED_DOG = gql`
+export const GET_PERSISTED_DOG = gql\`
   query GetPersistedDog {
     persistedDog @client
   }
-`
+\`
 
-export const SET_PERSISTED_DOG = gql`
+export const SET_PERSISTED_DOG = gql\`
   mutation SavePersistedDog($persistedDog: String!) {
     persistedDog(input: { persistedDog: $persistedDog }) @client {
       success
     }
   }
-`
-```
+\`
+`} lang="jsx" theme={'night-owl'} />
 
 Next, we need to write a resolver for each operation.
 
-```
+<Code class='code-block' code={`
 const cache = new InMemoryCache()
 const httpLink = new HttpLink({ uri: graphqlEndPoint })
 
@@ -174,7 +178,7 @@ export const client = new ApolloClient({
   resolvers,
   cache,
 })
-```
+`} lang="jsx" theme={'night-owl'} />
 
 This doesn't look too bad, you might say. But all of this is for only _one_ property! The situation gets much much uglier when you add more and more properties to the local store. It's also very awkward to use this approach for complex objects. It's also very rigid, if we need to retrieve only a certain part of the object, or pre-process it in a particular way, we need to write yet another resolver and query. It clearly seems like Apollo wasn't intended to be used in this manner, because, well, it wasn't. Unfortunately, the experiment had failed. I had to abandon this endeavor and stick with redux/thunk (which has its own slew of problems).
 
@@ -186,12 +190,12 @@ All I want is to make it so that all data is fed into the component via a single
 
 Let's split the code above into view...
 
-```
+<Code class='code-block' code={`
 const DogsView = (props) => {
   const [someInputValue, setSomeInputValue] = useState('')
 
   if (loading) return 'Loading...'
-  if (error) return `Error! ${error.message}`
+  if (error) return \`Error! \${error.message}\`
 
   const onSomeInputValueChange = (event) => {
     setSomeInputValue(event.target.value)
@@ -199,7 +203,7 @@ const DogsView = (props) => {
 
   return (
     <div>
-      <h3>{`Persisted dog breed: ${props.persistedDog}`}</h3>
+      <h3>{\`Persisted dog breed: \${props.persistedDog}\`}</h3>
       <input placeholder='some input' value={someInputValue} onChange={onSomeInputValueChange} />
       <select
         name='dog'
@@ -218,11 +222,11 @@ const DogsView = (props) => {
 }
 
 export default DogsView
-```
+`} lang="jsx" theme={'night-owl'} />
 
 ... and controller.
 
-```
+<Code class='code-block' code={`
 const DogsController = (props) => {
   const { loading, error, data } = useQuery(GET_DOGS)
 
@@ -258,7 +262,7 @@ function mapDispatchToProps(dispatch) {
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(DogsController)
-```
+`} lang="jsx" theme={'night-owl'} />
 
 The view doesn't rely on redux or Apollo, and doesn't concern itself with processing the data or handling business logic - this is the responsibility of the controller. At the same time, the controller doesn't know anything about the low-level details of the UI. Each part is more concise and logically coherent.
 
@@ -266,7 +270,7 @@ The view doesn't rely on redux or Apollo, and doesn't concern itself with proces
 
 The first advantage, is, of course, that now our component is much easier to test. Business logic could easily be tested separately from render logic. No need to mock redux or Apollo when testing the view, and no need to care about rendering details, or complex Enzyme configuration when testing the controller. Just take a look at how easy it is to set up a storybook!
 
-```
+<Code class='code-block' code={`
 const mockProps = {
   loading: false,
   data: [
@@ -278,7 +282,7 @@ const mockProps = {
 }
 
 export const DogsViewStory = () => storiesOf('DogsView', module).add('default', () => <DogsView {...mockProps} />)
-```
+`} lang="jsx" theme={'night-owl'} />
 
 This pattern helps you improve your app architecture. Separating code into "views" and "controllers" makes it easier to read and understand. You instantly know what to expect from the component even before opening the file by simply looking at its name. This pattern makes you break your code into smaller chunks, which is always good. It also gives you a guideline on how exactly it should be broken. So instead of ending up with components containing both business and render logic, we have smaller blocks, where each block is concise and logically coherent. This approach can also help you follow the [Single Responsibility Principle](https://en.wikipedia.org/wiki/Single-responsibility_principle), if you decide to commit to making your code even more granular.
 

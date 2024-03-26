@@ -17,7 +17,7 @@ const getLinkStyle = (route: string) => {
         <span class={'header-subtitle'}>Personal blog by</span>
         <a href={routes.contact} class={'header-subtitle-link'}> Alex Korzh </a>
         <a href={routes.contact} class={'header-portrait'}>
-          <Image src={profilePic} width='44' height='44' alt='Alex Korzh Portrait' />
+          <Image class={'portrait'} src={profilePic} alt='Alex Korzh Portrait' />
         </a>
       </div>
     </div>
@@ -36,6 +36,12 @@ const getLinkStyle = (route: string) => {
 
 <style lang='scss'>
   @import '../styles/global';
+
+  .portrait {
+    object-fit: contain;
+    max-width: 100%;
+    height: auto;
+  }
 
   .header-title {
     @include normal-mono;
