@@ -5,8 +5,6 @@ import profilePic from '../assets/images/square_1.jpg'
 
 const getLinkStyle = (route: string) => {
   let currentRoute = Astro.url.pathname
-  const lastSlahsIndex = currentRoute.lastIndexOf('/')
-  currentRoute = currentRoute.slice(0, lastSlahsIndex)
   return route === currentRoute ? 'active-section-item' : 'section-item'
 }
 ---
