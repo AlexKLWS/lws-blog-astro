@@ -4,7 +4,9 @@ import { Image } from 'astro:assets'
 import profilePic from '../assets/images/square_1.jpg'
 
 const getLinkStyle = (route: string) => {
-  const currentRoute = Astro.url.pathname
+  let currentRoute = Astro.url.pathname
+  const lastSlahsIndex = currentRoute.lastIndexOf('/')
+  currentRoute = currentRoute.slice(0, lastSlahsIndex)
   return route === currentRoute ? 'active-section-item' : 'section-item'
 }
 ---
@@ -27,7 +29,6 @@ const getLinkStyle = (route: string) => {
     <nav class={'section-list'}>
       <a href={routes.life} class={getLinkStyle(routes.life)}> Life </a>
       <a href={routes.code} class={getLinkStyle(routes.code)}> Code </a>
-      <a href={routes.guides} class={getLinkStyle(routes.guides)}> Guides </a>
       <a href={routes.projects} class={getLinkStyle(routes.projects)}> Projects </a>
       <a href={routes.games} class={getLinkStyle(routes.games)}> Games </a>
     </nav>
