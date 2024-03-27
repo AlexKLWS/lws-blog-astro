@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content'
 import Layout from '../../../layouts/Layout.astro'
-// 1. Generate a new path for every collection entry
+
 export async function getStaticPaths() {
   const blogEntries = await getCollection('posts')
   return blogEntries.map((entry) => ({
@@ -9,7 +9,7 @@ export async function getStaticPaths() {
     props: { entry },
   }))
 }
-// 2. For your template, you can get the entry directly from the prop
+
 const { entry } = Astro.props
 const { Content } = await entry.render()
 ---
@@ -22,6 +22,7 @@ const { Content } = await entry.render()
   <post>
     <Content />
   </post>
+  <p class={'post-date'}>{entry.data.pubDate.toISOString().slice(0, 10)}</p>
 </Layout>
 
 <style lang='scss'>
@@ -58,6 +59,19 @@ const { Content } = await entry.render()
 
     @media (min-width: $breakpoint-lg) {
       padding: 0px 4ex;
+    }
+  }
+
+  .post-date {
+    @include normal-mono;
+    font-weight: 300;
+    font-size: 14px;
+    line-height: 1.5rem;
+    padding: 1.2rem 0.5rem 1.5rem 0.5rem;
+    text-align: end;
+
+    @media (min-width: $breakpoint-lg) {
+      padding: 1.2rem 2rem 1.5rem 2rem;
     }
   }
 
