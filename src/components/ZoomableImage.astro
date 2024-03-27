@@ -6,7 +6,7 @@ const { url, alt, caption } = Astro.props
 
 <div class='image-container'>
   <Image id={'zoomable'} class={'zoomable-image'} src={url} alt={alt} />
-  {caption && <figcaption class='image-caption'>{alt}</figcaption>}
+  {!!caption && <figcaption class='image-caption'>{caption}</figcaption>}
 </div>
 
 <style lang='scss'>
@@ -15,6 +15,10 @@ const { url, alt, caption } = Astro.props
 
   .image-container {
     padding: 1rem 0px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 
     @media (min-width: $breakpoint-lg) {
       padding: 1.5rem 4rem;
@@ -25,12 +29,12 @@ const { url, alt, caption } = Astro.props
     @include normal-mono;
     text-align: center;
     font-size: 0.8rem;
-    margin-top: 0.5rem;
+    margin-top: 0.8rem;
     color: $figcaption-color;
   }
 
   .zoomable-image {
-    max-width: 100%;
+    max-width: 80%;
     height: auto;
   }
 </style>
