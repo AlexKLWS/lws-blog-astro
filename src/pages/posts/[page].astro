@@ -8,7 +8,8 @@ import type { GetStaticPaths } from 'astro'
 
 export const getStaticPaths = (async ({ paginate }) => {
   const allPosts = await getCollection('posts')
-  return paginate(allPosts, {
+  const filteredPosts = allPosts.filter((p) => !p.data.private)
+  return paginate(filteredPosts, {
     pageSize: PAGE_SIZE,
   })
 }) satisfies GetStaticPaths
@@ -16,7 +17,7 @@ export const getStaticPaths = (async ({ paginate }) => {
 const { page } = Astro.props
 ---
 
-<Layout title={'Hello'}>
+<Layout>
   <PostList
     posts={page.data}
     pageNumber={page.currentPage}
