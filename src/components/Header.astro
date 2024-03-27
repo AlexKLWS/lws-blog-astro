@@ -3,10 +3,15 @@ import routes from '../consts/routes'
 import { Image } from 'astro:assets'
 import profilePic from '../assets/images/square_1.jpg'
 
-const getLinkStyle = (route: string) => {
-  let currentRoute = Astro.url.pathname
-  return route === currentRoute ? 'active-section-item' : 'section-item'
+const getLinkStyle = (expectedTag: string, tag?: string) => {
+  return expectedTag === tag ? 'active-section-item' : 'section-item'
 }
+
+interface Props {
+  tag?: string
+}
+
+const { tag } = Astro.props
 ---
 
 <header>
@@ -25,10 +30,10 @@ const getLinkStyle = (route: string) => {
       <Dropdown dropdownTriggerText={getDropdownLabel(router.pathname)} items={dropdownItems} />
     </div> -->
     <nav class={'section-list'}>
-      <a href={routes.life} class={getLinkStyle(routes.life)}> Life </a>
-      <a href={routes.code} class={getLinkStyle(routes.code)}> Code </a>
-      <a href={routes.projects} class={getLinkStyle(routes.projects)}> Projects </a>
-      <a href={routes.games} class={getLinkStyle(routes.games)}> Games </a>
+      <a href={routes.life} class={getLinkStyle('life', tag)}> Life </a>
+      <a href={routes.code} class={getLinkStyle('code', tag)}> Code </a>
+      <a href={routes.projects} class={getLinkStyle('projects', tag)}> Projects </a>
+      <a href={routes.games} class={getLinkStyle('games', tag)}> Games </a>
     </nav>
   </nav>
 </header>
