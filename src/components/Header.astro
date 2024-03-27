@@ -72,10 +72,11 @@ const { tag } = Astro.props
     flex-direction: column;
     width: 100%;
     justify-content: space-between;
-    padding: 2.25rem 0px;
+    padding: 1.25rem 0px;
     border-bottom: $thin-black-color 1px solid;
 
     @media (min-width: $breakpoint-lg) {
+      padding: 2.25rem 0px;
       flex-direction: row;
     }
   }
@@ -138,7 +139,9 @@ const { tag } = Astro.props
     -webkit-border-radius: 50%;
     -moz-border-radius: 50%;
     visibility: hidden;
+    display: none;
     @media (min-width: $breakpoint-lg) {
+      display: block;
       visibility: visible;
     }
   }
