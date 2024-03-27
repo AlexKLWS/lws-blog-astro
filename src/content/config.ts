@@ -6,7 +6,7 @@ const postsCollection = defineCollection({
     title: z.string(),
     subtitle: z.string(),
     pubDate: z.date(),
-    metaDescription: z.string(),
+    metaDescription: z.string().optional(),
     icon: z.string().optional(),
     tags: z.array(z.string()),
     private: z.boolean(),
