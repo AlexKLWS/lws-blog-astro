@@ -101,6 +101,14 @@ p {
   color: $primary-color;
   padding: 1rem;
   z-index: 100;
+
+  &:focus {
+    left: 0;
+    top: 0;
+    padding: 3px;
+    background: $white-color;
+    border:1px solid $primary-color;
+  }
 }
 
 ::-moz-selection {
