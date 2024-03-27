@@ -15,9 +15,12 @@ interface Props {
   title?: string
   description?: string
   tag?: string
+  property?: string
 }
 
-const { title, description, tag } = Astro.props
+const { title, description, tag, property } = Astro.props
+
+const fullUrl = import.meta.env.SITE + Astro.url.pathname
 ---
 
 <!doctype html>
@@ -27,6 +30,7 @@ const { title, description, tag } = Astro.props
     <meta name='description' content='Astro description' />
     <meta name='viewport' content='width=device-width' />
     <link rel='icon' href='/favicon.ico' />
+    <meta property='og:url' content={fullUrl} />
     <meta property='og:title' content={title || DEFAULT_TITLE} />
     <meta property='og:description' content={description || DEFAULT_DESCRIPTION} />
     <meta name='description' content={description || DEFAULT_DESCRIPTION} />
@@ -37,8 +41,9 @@ const { title, description, tag } = Astro.props
     <meta property='og:image' content={OPEN_GRAPH_IMAGE} />
     <meta name='twitter:image' content={OPEN_GRAPH_IMAGE} />
     <meta property='vk:image' content={OPEN_GRAPH_IMAGE} />
-    <script async defer data-domain='longwintershadows.com' src='https://plausible.io/js/plausible.js'></script>
+    <!-- <script async defer data-domain='longwintershadows.com' src='https://plausible.io/js/plausible.js'></script> -->
     <meta name='generator' content={Astro.generator} />
+    {property && <meta property={property} />}
     <title>{title}</title>
   </head>
   <body>
