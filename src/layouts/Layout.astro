@@ -46,7 +46,7 @@ const fullUrl = import.meta.env.SITE + Astro.url.pathname
     <meta name='generator' content={Astro.generator} />
     {contentType && <meta content={contentType} property='og:type' />}
     {property && <meta property={property} />}
-    <title>{title}</title>
+    <title>{title || DEFAULT_TITLE}</title>
   </head>
   <body>
     <a class='app-skip-link' href='#main'> Skip to main </a>
