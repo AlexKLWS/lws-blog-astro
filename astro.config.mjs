@@ -10,4 +10,5 @@ export default defineConfig({
       theme: 'night-owl',
     },
   },
+  site: 'https://blog.longwintershadows.com',
 })
