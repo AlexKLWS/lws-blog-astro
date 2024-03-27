@@ -1,8 +1,9 @@
 ---
+import { DEFAULT_AUTHOR_NAME } from '../consts/metaDefaults'
 import Layout from '../layouts/Layout.astro'
 ---
 
-<Layout title='Contact'>
+<Layout title=`Contact - ${DEFAULT_AUTHOR_NAME}`>
   <div class={'contact-container'}>
     <h1 class={'contact-title'}>Contact</h1>
     <p class={'contact-info'}>

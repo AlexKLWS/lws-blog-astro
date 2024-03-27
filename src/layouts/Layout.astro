@@ -16,9 +16,10 @@ interface Props {
   description?: string
   tag?: string
   property?: string
+  contentType?: string
 }
 
-const { title, description, tag, property } = Astro.props
+const { title, description, tag, property, contentType } = Astro.props
 
 const fullUrl = import.meta.env.SITE + Astro.url.pathname
 ---
@@ -43,6 +44,7 @@ const fullUrl = import.meta.env.SITE + Astro.url.pathname
     <meta property='vk:image' content={OPEN_GRAPH_IMAGE} />
     <!-- <script async defer data-domain='longwintershadows.com' src='https://plausible.io/js/plausible.js'></script> -->
     <meta name='generator' content={Astro.generator} />
+    {contentType && <meta content={contentType} property='og:type' />}
     {property && <meta property={property} />}
     <title>{title}</title>
   </head>

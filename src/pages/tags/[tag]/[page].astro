@@ -5,6 +5,7 @@ import Layout from '../../../layouts/Layout.astro'
 import { PAGE_SIZE } from '../../../consts/pagination'
 
 import type { GetStaticPaths } from 'astro'
+import { DEFAULT_AUTHOR_NAME, DEFAULT_TITLE } from '../../../consts/metaDefaults'
 
 export const getStaticPaths = (async ({ paginate }) => {
   const allPosts = await getCollection('posts')
@@ -22,7 +23,7 @@ const { page } = Astro.props
 const { tag } = Astro.params
 ---
 
-<Layout title={tag} tag={tag}>
+<Layout title={`${tag.toLocaleUpperCase()} - ${DEFAULT_AUTHOR_NAME}`} tag={tag}>
   <PostList
     posts={page.data}
     pageNumber={page.currentPage}

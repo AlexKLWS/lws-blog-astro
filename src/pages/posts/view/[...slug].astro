@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content'
 import Layout from '../../../layouts/Layout.astro'
+import { DEFAULT_AUTHOR_NAME } from '../../../consts/metaDefaults'
 
 export async function getStaticPaths() {
   const blogEntries = await getCollection('posts')
@@ -14,7 +15,12 @@ const { entry } = Astro.props
 const { Content } = await entry.render()
 ---
 
-<Layout title={entry.data.title} description={entry.data.metaDescription} property={'post'}>
+<Layout
+  title={`${entry.data.title} - ${DEFAULT_AUTHOR_NAME}`}
+  description={entry.data.metaDescription}
+  property={'article'}
+  contentType={'article'}
+>
   <div class={'post-title-container'}>
     <h1 class='post-title'>{entry.data.title}</h1>
     <h2 class='post-subtitle'>{entry.data.subtitle}</h2>

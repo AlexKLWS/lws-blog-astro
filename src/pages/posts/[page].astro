@@ -5,6 +5,7 @@ import Layout from '../../layouts/Layout.astro'
 import { PAGE_SIZE } from '../../consts/pagination'
 
 import type { GetStaticPaths } from 'astro'
+import { DEFAULT_AUTHOR_NAME, DEFAULT_TITLE } from '../../consts/metaDefaults'
 
 export const getStaticPaths = (async ({ paginate }) => {
   const allPosts = await getCollection('posts')
@@ -17,7 +18,7 @@ export const getStaticPaths = (async ({ paginate }) => {
 const { page } = Astro.props
 ---
 
-<Layout>
+<Layout title={`${DEFAULT_TITLE} - ${DEFAULT_AUTHOR_NAME}`}>
   <PostList
     posts={page.data}
     pageNumber={page.currentPage}

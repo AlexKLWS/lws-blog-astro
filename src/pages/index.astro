@@ -4,15 +4,15 @@ import Layout from '../layouts/Layout.astro'
 import PostList from '../components/PostList.astro'
 import { PAGE_SIZE } from '../consts/pagination'
 import routes from '../consts/routes'
+import { DEFAULT_AUTHOR_NAME, DEFAULT_TITLE } from '../consts/metaDefaults'
 
-const pageTitle = 'LWS'
 const allPosts = await getCollection('posts')
 const filteredPosts = allPosts.filter((p) => !p.data.private)
 const firstPagePosts = filteredPosts.slice(0, PAGE_SIZE)
 const pageCount = Math.floor(filteredPosts.length / PAGE_SIZE)
 ---
 
-<Layout title={pageTitle}>
+<Layout title={`${DEFAULT_TITLE} - ${DEFAULT_AUTHOR_NAME}`}>
   <PostList
     posts={firstPagePosts}
     pageNumber={pageCount > 1 ? 1 : undefined}
