@@ -1,11 +1,13 @@
 ---
 import { Image } from 'astro:assets'
 
-const { url, alt, caption } = Astro.props
+const { urls, alt, caption } = Astro.props
 ---
 
 <div class='image-container'>
-  <Image id={'zoomable'} class={'zoomable-image'} src={url} alt={alt} />
+  {urls[0] && <Image id={`zoomable0`} class={'zoomable-image'} src={urls[0]} alt={alt} />}
+  {urls[1] && <Image id={`zoomable1`} class={'zoomable-image'} src={urls[1]} alt={alt} />}
+  {urls[2] && <Image id={`zoomable2`} class={'zoomable-image'} src={urls[2]} alt={alt} />}
   {!!caption && <figcaption class='image-caption'>{caption}</figcaption>}
 </div>
 
@@ -18,6 +20,8 @@ const { url, alt, caption } = Astro.props
 
     @media (min-width: $breakpoint-lg) {
       padding: 1.5rem 4rem;
+      display: flex;
+      justify-content: space-between;
     }
   }
 
@@ -30,10 +34,8 @@ const { url, alt, caption } = Astro.props
   }
 
   .zoomable-image {
+    max-height: 20rem;
     width: auto;
-    max-width: 80%;
-    height: auto;
-    max-height: 40rem;
     display: block;
     margin-left: auto;
     margin-right: auto;
@@ -42,6 +44,7 @@ const { url, alt, caption } = Astro.props
 
 <script>
   import mediumZoom from 'medium-zoom'
-
-  mediumZoom('#zoomable')
+  mediumZoom(`#zoomable0`)
+  mediumZoom(`#zoomable1`)
+  mediumZoom(`#zoomable2`)
 </script>
