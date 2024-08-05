@@ -1,0 +1,82 @@
+---
+title: 'Asana Test Project'
+subtitle: "Notifications List Page Feature Concept"
+pubDate: 2024-08-05
+metaDescription: "Asana Notifications List Page Feature Concept"
+icon: 'folder_1'
+tags: ['code']
+private: true
+---
+
+import ZoomableImage from '../../components/ZoomableImage.astro'
+import myImage1 from "../../assets/images/asana/asana-1.png";
+import myImage2 from "../../assets/images/asana/asana-2.png";
+import myImage3 from "../../assets/images/asana/asana-3.png";
+import myImage4 from "../../assets/images/asana/asana-4.png";
+import myImage5 from "../../assets/images/asana/asana-5.png";
+import myImage6 from "../../assets/images/asana/asana-6.png";
+
+
+Hi there! My name is Alex. I recently applied for the Software Developer/Tech Lead position. After I applied, I had a little bit of free time, so I have built a small project I to showcase my skills. I'd love it if you could take a moment to check it out, along with the code. I believe my experience would be a great fit for the role, and I hope this project demonstrates that.
+
+A bit about me: I have over 9 years of software development and leadership experience, including leading small teams through various challenges. I've been involved in everything from hiring and mentoring to designing code architecture and high-level planning. I learn quickly and adapt to any situation. If something needs to be done I roll up my sleeves and do it, no matter if it’s a unfamiliar codebase or tech-stack. I always get things done.
+
+Actions speak louder than words, so I hope this project gives you a good sense of my speed and ability to handle complex full-stack projects. Thank you very much for your time!
+
+You can test the deployed project here: https://asana-test-fe.vercel.app
+
+The source code for the backend: https://github.com/AlexKLWS/asana-test-be
+
+And for the frontend: https://github.com/AlexKLWS/asana-test-fe
+
+### The product idea
+
+This project started with the product idea. Considering that CommsX is focused on creating product notification experiences that enable users to discover the value of Asana and grow their workgraph, I have decided to try and rethink the notifications page. I treated this as a brainstorming exercise, I wanted to come up with a simple idea and demonstrate it with a quick POC without focusing too much on polish. After all, I am very limited on time and resources.
+
+After exploring Asana's notifications feature, I came up with a few ideas. The one I pursued involves reordering the notification list. Instead of displaying notifications chronologically, I thought it would be interesting to give users an option to switch to a view where notifications are grouped by priority, relevance to the user's current task or role, or a combination of these factors.
+<ZoomableImage url={myImage5} alt={'Current Asana notification list page'}/>
+For inspiration, I looked at Spark email's smart inbox, which I've found extremely useful for organizing new emails into groups. I also drew from Android's notification drawer, which excels at managing a constant flow of notifications.
+<ZoomableImage url={myImage1} caption={'Spark`s Smart Inbox organizes new emails in neat sections according to their contents'} alt={'Spark smart inbox'}/>
+I decided to create a simple app to demonstrate this concept: a list of items that adapts to the user's usage patterns and organizes notifications into groups based on specific criteria.
+
+### The project
+
+What I have ended up with is very straightforward. The app starts with a login page where you only need to enter a username. If you enter a new, unique username, it creates a new user; if you use an existing username, it logs you in as that user. It's like a typical username and password login, but without the password. While this isn't secure, it's not a concern for this project.
+<ZoomableImage url={myImage3} alt={'Simplified login page'}/>
+After logging in, you'll see a page inspired by Asana's notifications layout. There's a list of items on the left, and selecting one shows its details on the right. For this project, I used real-world data from Product Hunt. The initial load might take a moment due to reasons I'll explain later, but navigation should be smooth afterward.
+<ZoomableImage url={myImage4} alt={'List of posts'}/>
+Initially, all items are presented in a simple list. However, after clicking on and viewing a few items (I recommend at least three), and then refreshing the page, you might notice the list changing to display two groups: "For You" and "New Items." The "For You" section includes new Product Hunt posts that match the categories—or "topics," as referred to in the Product Hunt API—of the three most recent items you've viewed. If you don't see the list split into sections right away, try refreshing a few times; sometimes, new posts don't immediately match the topics of previously viewed items.
+<ZoomableImage url={myImage2} alt={'List of posts separated in sections'}/>
+I aimed to keep the design simple yet appealing and the functionality straightforward and easy to test. Despite its simplicity, I believe the app effectively demonstrates its core idea: a list of items that adapts to the user, rather than just showing each item chronologically.
+
+### The development stack
+
+The job posting mentioned Scala, JavaScript, and TypeScript, so I chose those for my project. While I'm an expert in JavaScript/TypeScript, I don't have much experience with Scala. I saw this as a great opportunity to learn and showcase my ability to pick up new technologies. My strong background in Java, OOP, and SOLID principles, and good understanding of functional programming was definitely helpful.
+
+I also did some research on Asana's tech stack and found that the company was one of the early adopters of GraphQL, which led me to use Product Hunt’s API for this project. Although I have extensive experience with PostgreSQL, I opted for MySQL since it's used by Asana.
+
+For the frontend, I chose Next.js with TypeScript and Tailwind, which I consider the default go-to stack for modern web development. I'm familiar with the latest Next.js features, so I used the app router and server actions for requests. To speed up UI development, I used the shadcn/ui library. The frontend is pretty simple: when a user logs in, their username is stored in a cookie and sent to the backend as a header.
+
+Initially, I planned to keep the backend infrastructure simple, using the most basic DigitalOcean compute droplet for the server and a separate VPS for the database. However, I decided to experiment a bit and ended up building the backend on AWS, using Lambdas and RDS with MySQL. I learned that Java/Scala isn't the best fit for Lambdas due to performance issues and their different design sensibilities. The cold start times for JVM Lambdas are atrocious and can easily take more than 20 seconds – this is why the initial load of the Product Hunt’s posts on my website can take a long time. Lambdas excel when they're small and simple, while Java and Scala are better suited for large, complex projects. So, while I completed the project, I realized Scala wasn’t the best tools for this task. Using Docker and deploying to Heroku would’ve probably been a much better choice here. For the authorizer Lambdas I used Node.js, however.
+
+On the backend, I used Caliban Client for GraphQL calls to Product Hunt’s API and ZIO for the STTP backend, as I discovered that Asana sponsors ZIO's development so it might be used internally. I initially wanted to use JDBC for database interactions to showcase my SQL skills, but the project was just too simple for that. So, I went with Slick instead. 
+
+When a user clicks on the post in the list, a POST request is made to Lambda, which creates a record indicating that the user viewed the post in the database, and also stores the posts topics. Whenever a GET request is made, the Lambda handling it checks for the last 3 posts viewed by the user in the DB, and gets topics for these posts. Then, it fetches 14 new posts from Product Hunt API, and filters them in such a way that posts with topics that match topics we just got from db are put in the “For You” section, and the rest go in the other section. And that’s all there’s to it, really.
+
+Once again, you can test the deployed project here: https://asana-test-fe.vercel.app
+
+The source code for the backend: https://github.com/AlexKLWS/asana-test-be
+
+And for the frontend: https://github.com/AlexKLWS/asana-test-fe
+
+### Improvements
+
+There are plenty of areas for improvement in this project, but the most crucial one, in my opinion, is writing more idiomatic Scala. I was learning a lot on the fly and working quickly, so the code ended up a bit messy. I hold myself to high standards, and honestly, I wouldn't open a PR with the code in its current state.
+
+If I have the time, I'd like to refactor the project to improve the separation of concerns by moving different parts into their own services. This would help enhance the clarity and flow of the code. Lastly, of course, I'd also get rid of the early returns in one of the handlers.
+
+### Conclusion
+
+Thank you very much for taking time to look through my project. I hope it has given you a better understanding of my knowledge and technical skills. I'm excited about the opportunity to contribute to your team and would love to discuss how I can bring value to the position. Please feel free to reach out if you have any questions or would like to chat further!
+<ZoomableImage url={myImage6} caption={'The task is complete!'} alt={'Screenshot of Asana task'}/>
+_Note: this article is only available via link and not accessible from my website’s home page_
