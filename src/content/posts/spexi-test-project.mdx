@@ -1,0 +1,63 @@
+---
+title: 'Spexi Test Project'
+subtitle: "Aerial Imagery Collecting Area List Page Feature Concept"
+pubDate: 2024-08-12
+metaDescription: "Spexi Aerial Imagery Collecting Area List Page Feature Concept"
+icon: 'folder_1'
+tags: ['code']
+private: true
+---
+
+import ZoomableImage from '../../components/ZoomableImage.astro'
+import myImage1 from "../../assets/images/spexi/image_1.png";
+import myImage2 from "../../assets/images/spexi/image_2.png";
+import myImage3 from "../../assets/images/spexi/image_3.png";
+
+Hi there! My name is Alex. I am applying for the Senior Software Engineer, Frontend position. I had a little bit of free time, so I have built a small project I to showcase my skills. I'd love it if you could take a moment to check it out, along with the code. I believe my experience would be a great fit for the role, and I hope this project demonstrates that.
+
+A bit about me: I have over 9 years of software development and leadership experience. I've been involved in everything from hiring and mentoring to designing code architecture and high-level planning. I learn quickly and adapt to any situation. If something needs to be done I roll up my sleeves and do it. No matter if it’s a unfamiliar codebase or tech-stack, I always get things done.
+
+Actions speak louder than words, so I hope this project gives you a good sense of my speed and ability to handle complex full-stack projects. Thank you very much for your time!
+
+You can test the deployed project here: https://spexi-test.vercel.app
+
+And the view source code here: https://github.com/AlexKLWS/spexi-test
+
+Now, the details...
+
+### The Project
+
+The idea for this project is simple – I wanted to build a small full-stack app to demonstrate my knowledge of the tech stack described in the job posting. What I ended up with is a small website inspired by Spexi’s platform. It allows drone pilots to view available areas where they can collect imagery. Each area is shown on a 3D map with a pin, and has a corresponding card which provides relevant details, such as the exact location and the reward offered in cryptocurrency tokens. Pilots can also bookmark these areas for future reference.
+
+The app starts with a login page where you only need to enter a username. If you enter a new, unique username, it creates a new user; if you use an existing username, it logs you in as that user. It's like a typical username and password login, but without the password. While this isn't secure, it's not a concern for this project.
+<ZoomableImage url={myImage1} alt={'Simplified login page'}/>
+After logging in, you'll see a list of mock areas available for  collecting aerial imagery for, fetched from the remote database. In the top right corner of each card there’s a bookmark button, clicking on which marks the are as bookmarked for your user. Next time you login as the same user, from any device, your choice will be preserved, as data is stored in the remote database. You can also view an interactive 3D map, with each area available for “scouting” marked by a 3D pin.
+<ZoomableImage url={myImage2} alt={'List of areas and a 3D map'}/>
+The app is also fully responsive, and looks as good on mobile screens as it does on desktop.
+<ZoomableImage url={myImage3} alt={'Mobile UI'}/>
+
+Selecting an area (either by pressing “View” button in the card or by clicking on the map pin) makes the area card in the scroll view display as selected and scrolls the card to be in the center of the screen. It also automatically pans the map to center on that area.
+
+And this is about all there’s to it!
+
+### The Development
+
+For the frontend, I chose Next.js with TypeScript and Tailwind, which I consider the default go-to stack for modern web development. I'm familiar with the latest Next.js features, so I used the app router and server actions for requests. To speed up UI development, I used the shadcn/ui library. The frontend is pretty simple: when a user logs in, their username is stored in a cookie and sent to the backend as a header.
+
+I wanted to challenge myself and make the project more interesting. I decided to learn a new technology to demonstrate my ability to quickly pick up new skills. I chose Three.js, which I had been wanting to try for a while. Although I have a strong background in 3D, this was my first time using Three.js, and I think it turned out well! To render the map I used react-three-map with MapLibre GL JS rendering backend. Additionally, I implemented a snap scroll component from scratch using ref forwarding.
+
+Since the job posting mentioned knowledge of MySQL and AWS, I incorporated them into my backend stack. The MySQL database is hosted on AWS RDS, and I used Node.js Lambdas for backend logic, deployed via AWS SAM. While the project isn’t overly complex, I used some advanced techniques to showcase my solid understanding of the technologies involved.
+
+Once again, you can test the deployed project here: https://spexi-test.vercel.app
+
+And the view source code here: https://github.com/AlexKLWS/spexi-test
+
+### Improvements
+
+I am considering forking the react-three-map package and making several improvements to it. There’s an issue with the map not taking all available canvas area on screens with bigger resolution which I would like to fix. The other problem that I want to address, is improving custom material rendering.
+
+### Conclusion
+
+Thank you very much for taking time to look through my project. I hope it has given you a better understanding of my knowledge and technical skills. I'm excited about the opportunity to contribute to your team and would love to discuss how I can bring value to the position. Please feel free to reach out if you have any questions or would like to chat further!
+
+_Note: this article is only available via link and not accessible from my website’s home page_
