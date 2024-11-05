@@ -1,0 +1,33 @@
+---
+title: 'Custom alternative to Atlas Device Sync system part 1'
+subtitle: "Planning a distributed offline-first data synchronization system for React Native"
+pubDate: 2024-10-23
+metaDescription: "Planning a distributed offline-first data synchronization system for React Native, a custom alternative to Atlas Device Sync"
+icon: 'folder_1'
+tags: ['code']
+private: false
+---
+
+Recently, MongoDB announced plans to deprecate certain features, including the Atlas Device SDK and Atlas Device Sync. While I have considerable experience with Realm and MongoDB(although a long time ago), I haven’t yet had the opportunity to work with Atlas Device Sync specifically. However, I’ve always found its core concept very interesting — a system that seamlessly integrates and synchronizes data between local storage and the cloud. Building such a system myself has long been a personal goal, despite the challenge. Creating a distributed system with robust state reconciliation mechanisms is no small feat, but the complexity only makes it all the more compelling. Although I have a lot of experience building front-ends that rely on optimistic rendering, developing a custom replacement for Atlas Device Sync is a far more ambitious undertaking. Still, this is something that I want to try. I don’t know exactly how this project will unfold or if it will succeed, but I’m excited to give it a shot.
+
+In this post, I’ll document my early thoughts and ideas on tackling this project. Currently, I’m still in the planning phase, so what follows will likely read as a stream of consciousness, and *many of my assumptions may prove incorrect.* Nonetheless, I want to capture my thought process (if this project goes anywhere) and also begin posting more regularly to my blog. So here we go — my thoughts and ideas on building a custom open-source React Native Atlas Device Sync replacement.
+
+### Initial concerns
+
+I want to start by establishing a few basic constraints: I intend to make this project open source, focus solely on React Native, and keep MongoDB and Realm as the core technologies. The goal is simple: synchronize data between multiple devices, be it a remote MongoDB instance or a local Realm database. There are various philosophies and approaches to such a system. For instance, something like Logux offers a relatively lightweight, vendor-agnostic framework that can integrate with any database and cloud provider, while Ditto provides a comprehensive all-in-one platform that handles many development challenges by default. For my purposes, a lighter approach would be preferable, though perhaps not as abstract as Logux. However, I may still end up using Logux as a dependency.
+
+Another essential consideration is peer equality within the system. Every peer — whether a MongoDB instance in the cloud or a Realm instance on a mobile device—should be treated as an equal participant, allowing any number of peers to join the system.
+
+The biggest challenge, however, lies in UX design, especially for a complex optimistic UI with extended synchronization times. I believe that consistently focusing on UX (and, of course, DX) can shape better technical decisions and, ultimately, a more user-friendly product. Too often, developers concentrate solely on the technical aspects without considering the impact on the final user experience. I believe that adopting a holistic approach will help create a more effective system.
+
+### Some technical details
+
+The actual sync background process will need to run natively, using BackgroundTasks on iOS and WorkManager on Android. For every significant database interaction, such as a write, a job descriptor should be sent to the peer network. This descriptor (essentially a JSON object) will describe the transaction, the initiating device, and other metadata, like timestamps. If a peer needs to make multiple changes simultaneously, these changes would naturally queue, with descriptors referencing others in the sequence (possibly by ID if represented in JSON).
+
+Crucially, the transaction descriptor and the actual transaction would post separately, in parallel. These descriptors must be lightweight and distributed across the network quickly and reliably. This way, even if peers don’t maintain fully synchronized states, they will at least be aware of pending updates. A potential design could take inspiration from Git, or perhaps a structure similar to Alembic, where each transaction also includes an option to roll back. Each peer would store these descriptors in a dedicated table within its database.
+
+### Conclusion and next steps
+
+So, those are my initial thoughts on approaching this problem. The next stage is in-depth research, which will likely take me some time. I plan to study and potentially reverse-engineer the original Atlas Device Sync SDK, along with similar libraries. Once I have meaningful findings, I’ll publish another post with updates.
+
+Thanks for reading!
