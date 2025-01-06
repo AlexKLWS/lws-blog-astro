@@ -7,7 +7,9 @@ import routes from '../consts/routes'
 import { DEFAULT_AUTHOR_NAME, DEFAULT_TITLE } from '../consts/metaDefaults'
 
 const allPosts = await getCollection('posts')
-const filteredPosts = allPosts.filter((p) => !p.data.private)
+const filteredPosts = allPosts
+  .filter((p) => !p.data.private)
+  .sort((p1, p2) => p2.data.pubDate.valueOf() - p1.data.pubDate.valueOf())
 const firstPagePosts = filteredPosts.slice(0, PAGE_SIZE)
 const pageCount = Math.floor(filteredPosts.length / PAGE_SIZE)
 ---

@@ -9,7 +9,9 @@ import { DEFAULT_AUTHOR_NAME, DEFAULT_TITLE } from '../../consts/metaDefaults'
 
 export const getStaticPaths = (async ({ paginate }) => {
   const allPosts = await getCollection('posts')
-  const filteredPosts = allPosts.filter((p) => !p.data.private)
+  const filteredPosts = allPosts
+    .filter((p) => !p.data.private)
+    .sort((p1, p2) => p2.data.pubDate.valueOf() - p1.data.pubDate.valueOf())
   return paginate(filteredPosts, {
     pageSize: PAGE_SIZE,
   })
