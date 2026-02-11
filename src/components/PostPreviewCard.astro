@@ -1,0 +1,91 @@
+---
+import Icon from './Icon.astro'
+
+const { title, subtitle, url, icon } = Astro.props
+---
+
+<a class={'post-preview-item'} href={url}>
+  <div class={'post-preview-icon-container'}>
+    <Icon icon={icon} />
+  </div>
+  <div>
+    <p class={'post-preview-items-title'}>{title}</p>
+    <p class={'post-preview-items-subtitle'}>{subtitle}</p>
+  </div>
+</a>
+
+<style lang='scss'>
+  @import '../styles/config';
+  @import '../styles/shared-mixins';
+
+  .post-preview-item {
+    @include button;
+    padding: 0.5rem 1.5rem 0.5rem 0px;
+    height: 120px;
+    display: flex;
+    border: $white-color solid 1px;
+    align-items: center;
+
+    &:focus {
+      border-color: $secondary-color;
+      border-width: 1px;
+      outline: none;
+    }
+  }
+
+  .MaterialPreviewItemExternalLinkIconContainer {
+    padding: 0px 16px;
+    margin-bottom: 3.4em;
+  }
+
+  .post-preview-icon-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 24px;
+  }
+
+  .post-preview-items-title {
+    @include normal-mono;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 21px;
+    height: 42px;
+    justify-self: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* number of lines to show */
+    -webkit-box-orient: vertical;
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+/Edge */
+    user-select: none; /* Standard */
+
+    @media (min-width: $breakpoint-lg) {
+      font-size: 17px;
+    }
+  }
+
+  .post-preview-items-subtitle {
+    @include normal;
+    font-weight: 300;
+    font-size: 14px;
+    line-height: 18px;
+    height: 36px;
+    justify-self: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* number of lines to show */
+    -webkit-box-orient: vertical;
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+/Edge */
+    user-select: none; /* Standard */
+
+    @media (min-width: $breakpoint-lg) {
+      font-size: 15px;
+    }
+  }
+</style>

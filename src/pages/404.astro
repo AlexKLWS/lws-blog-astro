@@ -1,0 +1,33 @@
+---
+import Layout from '../layouts/Layout.astro'
+---
+
+<Layout>
+  <div class='title-container'>
+    <h1 class='empty-page-title'>404</h1>
+    <h3 class='empty-page-subtitle'>Sorry, nothing here!</h3>
+  </div>
+</Layout>
+
+<style lang='scss'>
+  @import '../styles/global';
+
+  .title-container {
+    min-height: 720px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .empty-page-title {
+    @include normal-mono;
+    text-align: center;
+    font-weight: 900;
+  }
+
+  .empty-page-subtitle {
+    @include normal;
+    text-align: center;
+  }
+</style>

@@ -1,0 +1,316 @@
+---
+title: 'Keep your concerns separate'
+subtitle: 'Improve you React app architecture with this simple trick'
+pubDate: 2021-09-05
+metaDescription: 'Applying this simple pattern to React apps dramatically improves system architecture'
+icon: 'react'
+tags: ['code']
+private: false
+---
+
+import { Code } from 'astro:components';
+
+
+I love [GraphQL](https://graphql.org), and I love [Apollo](https://www.apollographql.com). So much, that in one of my React Native projects I decided to make Apollo a single source of truth. Why, isn't this such a good idea - to make it so that Apollo's `useQuery`/`useMutation` interface is used to fetch/manipulate both remote data and data from a local store? Well, it turned out it isn't.
+Take a look at the following code. You can see, that it uses [redux](https://redux.js.org) to retrieve data from the local store and update it. It also uses Apollo query to fetch remote data.
+
+
+<Code class='code-block' code={`
+const Dogs = (props) => {
+  const [someInputValue, setSomeInputValue] = useState('')
+
+  const { loading, error, data } = useQuery(GET_DOGS)
+
+  const onSomeInputValueChange = (event) => {
+    setSomeInputValue(event.target.value)
+  }
+
+  const onDogSelected = (e) => {
+    someBusinessLogic(someInputValue)
+
+    props.setPersistedDog(e.target.value)
+  }
+
+  if (loading) return 'Loading...'
+  if (error) return \`Error! \${error.message}\`
+
+  return (
+    <div>
+      <h3>{\`Persisted dog breed: \${props.persistedDog}\`}</h3>
+      <input placeholder='some input' value={someInputValue} onChange={onSomeInputValueChange} />
+      <select name='dog' onChange={onDogSelected}>
+        {data.dogs.map((dog) => (
+          <option key={dog.id} value={dog.breed}>
+            {dog.breed}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+function mapStateToProps(state) {
+  return {
+    persistedDog: state.persistedDog,
+  }
+}
+
+function mapDispatchToProps(dispatch) {
+  return {
+    setPersistedDog: (requested) => {
+      dispatch(setPersistedDog(requested))
+    },
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Dogs)
+`} lang="jsx" theme={'night-owl'} />
+
+
+Here's what I decided to do. Using Apollo's local resolvers (now a deprecated feature), I made it handle both local store data retrievals and updates. This made the component much nicer to look at.
+
+<Code class='code-block' code={`
+const Dogs = () => {
+  const [someInputValue, setSomeInputValue] = useState('')
+
+  const { loading, error, data } = useQuery(GET_DOGS)
+  const persistedDogData = useQuery(GET_PERSISTED_DOG)
+  const [setPersistedDogMutation] = useMutation(SET_PERSISTED_DOG)
+
+  const onSomeInputValueChange = (event) => {
+    setSomeInputValue(event.target.value)
+  }
+
+  const onDogSelected = (e) => {
+    someBusinessLogic(someInputValue)
+
+    setPersistedDogMutation({ variables: { persistedDog: e.target.value } })
+  }
+
+  if (loading) return 'Loading...'
+  if (error) return \`Error! \${error.message}\`
+
+  return (
+    <div>
+      <h3>{\`Persisted dog breed: \${persistedDogData.data.persistedDog}\`}</h3>
+      <input placeholder='some input' value={someInputValue} onChange={onSomeInputValueChange} />
+      <select name='dog' onChange={onDogSelected}>
+        {data.dogs.map((dog) => (
+          <option key={dog.id} value={dog.breed}>
+            {dog.breed}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+export default Dogs
+`} lang="jsx" theme={'night-owl'} />
+
+Whether data is remote or local, the only way the component obtains it is via queries, and the only way the component updates data is via mutations. As you can see, the nice thing about this is that we handle local operations in pretty much exactly the same manner as remote. However, a big disadvantage of this approach is that we handle local operations in pretty much exactly the same manner as remote... Wait, what? Let's take a deeper look. First, we need to write a GraphQl query for every local operation.
+
+<Code class='code-block' code={`
+import gql from 'graphql-tag'
+
+export const GET_PERSISTED_DOG = gql\`
+  query GetPersistedDog {
+    persistedDog @client
+  }
+\`
+
+export const SET_PERSISTED_DOG = gql\`
+  mutation SavePersistedDog($persistedDog: String!) {
+    persistedDog(input: { persistedDog: $persistedDog }) @client {
+      success
+    }
+  }
+\`
+`} lang="jsx" theme={'night-owl'} />
+
+Next, we need to write a resolver for each operation.
+
+<Code class='code-block' code={`
+const cache = new InMemoryCache()
+const httpLink = new HttpLink({ uri: graphqlEndPoint })
+
+const authLink = setContext((_, { headers }) => {
+  const token = getToken()
+  return {
+    headers: {
+      ...headers,
+      'Content-Type': 'application/json',
+      'API-Token': token,
+    },
+  }
+})
+
+const resolvers = {
+  Mutation: {
+    persistedDog: async (_data, args, _context) => {
+      if (args.input.persistedDog === 'null') {
+        return { success: true }
+      }
+      try {
+        await localStorage.setItem(KEY, args.input.persistedDog)
+      } catch (error) {
+        handleError(error)
+        return { success: false }
+      }
+      return { success: true }
+    },
+  },
+  Query: {
+    persistedDog: async (_data, _args, _context) => {
+      let persistedDog = null
+      try {
+        persistedDog = await localStorage.getItem(KEY)
+      } catch (error) {
+        handleError(error)
+      }
+      return persistedDog
+    },
+  },
+}
+
+export const client = new ApolloClient({
+  link: authLink.concat(httpLink),
+  resolvers,
+  cache,
+})
+`} lang="jsx" theme={'night-owl'} />
+
+This doesn't look too bad, you might say. But all of this is for only _one_ property! The situation gets much much uglier when you add more and more properties to the local store. It's also very awkward to use this approach for complex objects. It's also very rigid, if we need to retrieve only a certain part of the object, or pre-process it in a particular way, we need to write yet another resolver and query. It clearly seems like Apollo wasn't intended to be used in this manner, because, well, it wasn't. Unfortunately, the experiment had failed. I had to abandon this endeavor and stick with redux/thunk (which has its own slew of problems).
+
+### What is there to be done about this?
+
+All I want is to make it so that all data is fed into the component via a single unified interface. Is there any other way to achieve this? After all, this is such a simple concept... But wait! React _already comes with a single unified interface that is used to provide a component with all required data out of the box_ - it's called **props**! Let's take a step back here, and take a look at the problem from a different angle. What we need, is to relieve our component of the responsibility of managing the data, or choosing where to obtain that data from. A component shouldn't care about how the data was obtained, it should only receive it from a single source. It should only be concerned with rendering the UI. Just like a... _view_! That's it! If we think of it this way, the compositional nature of React aligns really well with [MVC's](https://en.wikipedia.org/wiki/Model–view–controller) (or [MVVM's](https://en.wikipedia.org/wiki/Model–view–viewmodel)) _philosophy_. After all, some people prefer to think of [React as simply a View in MVC](https://blog.andrewray.me/reactjs-for-stupid-people/). But how about we split our component into 2 parts – one is going to be "view" and the other is gonna play the role of a controller(sort of)? The view shouldn't be connected to context or any state manager, it should only be concerned with rendering the UI and it should only receive its data from props. The controller should wrap the view, and take care of all higher-level logic like making requests, navigation, analytics, obtaining data from the state manager, etc. Views could be used with different controllers, and controllers could be used with different views, however, this isn't important. Unlike HOCs, which should be as higher-level as possible, and should have the ability to be reused with any component, it's absolutely ok for controllers to work with only one specific view. The main benefit of this pattern is the separation of concerns at a lower level than HOCs. Also, of course, the approach proposed in this post isn't the exact by-the-book MVC implementation, but rather a pattern inspired by it.
+
+### So what does it look like?
+
+Let's split the code above into view...
+
+<Code class='code-block' code={`
+const DogsView = (props) => {
+  const [someInputValue, setSomeInputValue] = useState('')
+
+  if (loading) return 'Loading...'
+  if (error) return \`Error! \${error.message}\`
+
+  const onSomeInputValueChange = (event) => {
+    setSomeInputValue(event.target.value)
+  }
+
+  return (
+    <div>
+      <h3>{\`Persisted dog breed: \${props.persistedDog}\`}</h3>
+      <input placeholder='some input' value={someInputValue} onChange={onSomeInputValueChange} />
+      <select
+        name='dog'
+        onChange={(e) => {
+          props.onDogSelected(e.target.value, someInputValue)
+        }}
+      >
+        {props.data.dogs.map((dog) => (
+          <option key={dog.id} value={dog.breed}>
+            {dog.breed}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+export default DogsView
+`} lang="jsx" theme={'night-owl'} />
+
+... and controller.
+
+<Code class='code-block' code={`
+const DogsController = (props) => {
+  const { loading, error, data } = useQuery(GET_DOGS)
+
+  const onDogSelected = (dog, someInputValue) => {
+    someBusinessLogic(someInputValue)
+
+    props.setPersistedDog(dog)
+  }
+
+  return (
+    <DogsView
+      loading={loading}
+      error={error}
+      data={data}
+      persistedDog={props.persistedDog}
+      onDogSelected={onDogSelected}
+    />
+  )
+}
+
+function mapStateToProps(state) {
+  return {
+    persistedDog: state.persistedDog,
+  }
+}
+
+function mapDispatchToProps(dispatch) {
+  return {
+    setPersistedDog: (requested) => {
+      dispatch(setPersistedDog(requested))
+    },
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(DogsController)
+`} lang="jsx" theme={'night-owl'} />
+
+The view doesn't rely on redux or Apollo, and doesn't concern itself with processing the data or handling business logic - this is the responsibility of the controller. At the same time, the controller doesn't know anything about the low-level details of the UI. Each part is more concise and logically coherent.
+
+### Advantages of this approach
+
+The first advantage, is, of course, that now our component is much easier to test. Business logic could easily be tested separately from render logic. No need to mock redux or Apollo when testing the view, and no need to care about rendering details, or complex Enzyme configuration when testing the controller. Just take a look at how easy it is to set up a storybook!
+
+<Code class='code-block' code={`
+const mockProps = {
+  loading: false,
+  data: [
+    { id: '1', breed: 'terrier' },
+    { id: '2', breed: 'york' },
+  ],
+  persistedDog: 'terrier',
+  onDogSelected: () => undefined,
+}
+
+export const DogsViewStory = () => storiesOf('DogsView', module).add('default', () => <DogsView {...mockProps} />)
+`} lang="jsx" theme={'night-owl'} />
+
+This pattern helps you improve your app architecture. Separating code into "views" and "controllers" makes it easier to read and understand. You instantly know what to expect from the component even before opening the file by simply looking at its name. This pattern makes you break your code into smaller chunks, which is always good. It also gives you a guideline on how exactly it should be broken. So instead of ending up with components containing both business and render logic, we have smaller blocks, where each block is concise and logically coherent. This approach can also help you follow the [Single Responsibility Principle](https://en.wikipedia.org/wiki/Single-responsibility_principle), if you decide to commit to making your code even more granular.
+
+It also makes it much easier for several people to collaborate. One developer could take care of the controller, another of the view, props is the API interface via which their code communicates. One of many positive side-effects of this is that it also _forces_ the developer responsible for a controller to write tests (since they won't be able to manually test them using the UIs).
+
+### Wait...All this sounds kinda familiar
+
+Well, this is probably because you've already encountered this pattern. In React world, it is more common to see **Containers and Presentational components** instead of Controllers and Views. However, I'd like to add a few points in defense of the naming convention suggested in this post. In my opinion, it's better to tie our approach to a well-known, aged, and battle-tested pattern, which is MVC, rather than to a totally unique and frankly a bit vague concept which is Container. After all, this word is reserved for totally different things outside of React. I'm not entirely confident about View-Controller naming as well, since once again, this isn't a real MVC. However, the name "Controller" gives a much better idea of the insides of a file/module compared to "Container", in my opinion. In my most recent project, we had many components with "container" in their names which did not behave like actual containers are supposed to, so the term was already made meaningless within our codebase. Basically, this led us to adopt the View-Controller convention, and I kinda prefer it now. But you should use the naming convention you're most comfortable with.
+
+There're many other similar patterns that use different naming, as Dan Abramov points out in this [great post](https://medium.com/@dan_abramov/smart-and-dumb-components-7ca2f9a7c7d0). He also says that his views had evolved since the time that post was written and he doesn't suggest splitting components like this anymore. His reasoning is absolutely valid, and I agree with him 100%. This approach shouldn't be forced, and sometimes it could overcomplicate things. At the same time, I still believe this pattern is a pretty powerful tool that you should definitely consider. So, I will sum up all of the pros here:
+
+- Data is provided to views via a single interface - props.
+- Separation of concerns at a component level.
+- This pattern is very easy to understand and implement.
+- No need to mock anything other than props when testing views.
+- Setting up and using Storybook, or any other similar tool is much easier.
+- Much smaller components.
+- Components are more reusable.
+
+### How to use.
+
+Pretty much all "smart" components should be split into a controller and a view. As a rule of thumb, you should have at least one controller as a topmost component in the component hierarchy of a particular page in case of web, or screen in case of React Native, right below all wrappers and HOCs. The controller should render/return only one component - the view. As I mentioned before, it should be taking care of handling API calls, navigation, obtaining data from a global store, firing redux actions, etc. It should contain a conceptually higher-level level logic, or state not related to the UI, such as request progress, or data validation status. The view, on the other hand, should only care about state and logic related directly to the UI, such as animations, or current input value, etc. It's preferable to store the input values in the view, and only send them to the controller on submit. An understanding of MVC (or MVVM) really helps here.
+
+### And there you have it
+
+Of course, this isn't a one-fits-all approach. I don't think it would add much value to employ this pattern for small or/and simple websites. After all, the purpose of this pattern is to help you manage the complexity, so it doesn't make sense to use it if a project isn't too complex. Especially considering that when it comes to the web, bundle size matters a lot. So, as always, think and decide for yourself.
+
+This post turned out a bit bigger than I originally planned. I really hope you found this useful. Please let me know if you have any suggestions or questions.
+
+Thank you very much for reading! 📖
+

@@ -1,0 +1,22 @@
+<div class={'app-background'}>
+  <canvas id='canvas'></canvas>
+</div>
+
+<script src='../scripts/generateBackgroundPattern.js'></script>
+
+<style lang='scss'>
+  .app-background {
+    position: fixed;
+    background: #000000;
+    width: 100%;
+    min-height: 64rem;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    visibility: hidden;
+    @media (min-width: 768px) {
+      visibility: visible;
+    }
+  }
+</style>

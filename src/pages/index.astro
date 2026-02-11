@@ -1,11 +1,24 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content'
+import Layout from '../layouts/Layout.astro'
+import PostList from '../components/PostList.astro'
+import { PAGE_SIZE } from '../consts/pagination'
+import routes from '../consts/routes'
+import { DEFAULT_AUTHOR_NAME, DEFAULT_TITLE } from '../consts/metaDefaults'
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const allPosts = await getCollection('posts')
+const filteredPosts = allPosts
+  .filter((p) => !p.data.private)
+  .sort((p1, p2) => p2.data.pubDate.valueOf() - p1.data.pubDate.valueOf())
+const firstPagePosts = filteredPosts.slice(0, PAGE_SIZE)
+const pageCount = Math.floor(filteredPosts.length / PAGE_SIZE)
 ---
 
-<Layout>
-	<Welcome />
+<Layout title={`${DEFAULT_TITLE} - ${DEFAULT_AUTHOR_NAME}`}>
+  <PostList
+    posts={firstPagePosts}
+    pageNumber={pageCount > 1 ? 1 : undefined}
+    nextPageUrl={pageCount > 1 ? `${routes.pages}/1` : undefined}
+    lastPage={pageCount > 1 ? pageCount : undefined}
+  />
 </Layout>

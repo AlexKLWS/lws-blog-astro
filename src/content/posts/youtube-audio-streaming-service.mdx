@@ -1,0 +1,336 @@
+---
+title: 'Youtube audio streaming service'
+subtitle: "Not looking for easy solutions"
+pubDate: 2021-02-06
+metaDescription: "Youtube audio streaming service recipe"
+icon: 'youtube'
+tags: ['code', 'projects']
+private: false
+---
+
+import { Code } from 'astro:components';
+
+I think we can all agree that youtube ads are out of control. Sometimes it shows several ads in a row, sometimes at least one of them is unskippable and 30 seconds long, and sometimes there're just too many ad segments during a single video. I usually listen to DJ sets while I work, and I can't even put into words how annoying it is to listen to music when it constantly gets interrupted by an ad. And this is not all, the iOS app frequently displays irritating subscription banners and doesn't allow background audio playback without a subscription. All in all, if you don't have a premium/youtube music subscription, or if you don't use an ad-block, your experience is pretty terrible. This made me think: can I "fix" youtube so that I could listen to music without ads both on mobile and desktop? I have decided to make it a coding challenge for myself. Here's how it went. Before we begin, all sources are avaialable [here](https://github.com/AlexKLWS/youtube-audio-stream).
+
+### Do not repeat this at home
+
+The basic outline for this project came to me almost instantly. It had to be a web service. This service should have been able to retrieve a video from youtube, then process it so that it could be streamed to any client using a web browser. I already knew that downloading video from youtube without a premium subscription was possible since that's what youtube-dl allows to do. I also had some idea about how I was going to transform video to "streamable" format because I already had some experience with FFmpeg. Also, since I wanted to use this service to only listen to music, I could get rid of the all the video data except for audio. Not only would this make the file size smaller, which is good for streaming over cellular, but it would also allow for audio playback in the background on iOS (that is when the browser app is closed, or even when the phone is locked). Although, I don't know if the streamed content absolutely has to be audio-only for it to work, to be honest.
+
+### Technicalities
+
+**Important!** The service requires FFmpeg installation to work! In my experience, it's best to install it via a package manager, i.g. homebrew on a mac.
+Compiling a binary is pretty straightforward. Run `$ go install` and `$ go build` to make a binary. Tested with go version 3.17.
+Binary requires a config.yml file to be present in the same folder to run. Here's what the configuration might look like:
+
+
+<Code class='code-block' code={`
+env: "debug"
+
+port: ":1323"
+
+version: "v.0.0.3"
+
+output-route: "output"
+
+output-directory: "output"
+source-directory: "source"
+completion-marker: ".complete"
+`} theme={'night-owl'} />
+
+Now I'll go in detail over what every config option means.
+
+- `env` – Current environment. Specify "prod" for production. Use `-d` command flag to override this option and launch the service in debug mode.
+- `port` – Service port. Use `-p` command flag followed by the port you want to use to override this option.
+- `version` – Service version.
+- `output-route` – URL route for statically served m3u8 files, so that the streaming URL looks like this `{domain}/{output-route}/{m3u8 filename}`.
+- `output-directory` – Directory path where transmuxing output files are saved. Use `-o` command flag followed by the directory you want to use to override this option.
+- `source-directory` – Directory path where downloaded youtube files will be saved. It's called source as a "source files for transmuxing". Use `-s` command flag followed by the directory you want to use to override this option.
+- `completion-marker` – Completion marker file name. You can find what this is in _Transmuxing_ and _Anatomy of the request_ sections.
+
+
+The binary allows downloading the audio from youtube without launching the service. Simply run `$ ./{binary name} {video URL}`. The file is downloaded to the same folder as binary by default. Please mind that download functionality is pretty limited. The details of the download process are covered in the _Downloading section_.
+Run `$ ./{binary name} serve` to launch the service.
+
+### Under the hood.
+
+Service command-line interactions and configuration are handled with **Cobra** and **Viper**. Both are amazing libraries that are just such a pleasure to work with. The setup is pretty conventional. Using cobra we check for command options and select the corresponding handler. If a user didn’t provide the `serve` command, we simply use the download handler to attempt to obtain the audio. If `serve` command is provided, we start the server. The service API is built with **echo** framework.
+
+### Downloading video file
+
+Before we attempt a download, we need to extract the unique video id from the youtube video URL. This is pretty easy to do as it's always present in every video URL as query parameter "v". For example, in a URL `https://www.youtube.com/watch?v=Zr9wsgUIF6o` the `Zr9wsgUIF6o` is a unique video id. Next, we create an instance of the `Downloader` struct. This is our reference to a single instance of a download process, think of it as something akin to a stateful helper object. It provides methods for controlling the download process, and it stores the state and context of a download being performed by a particular instance. To be instantiated a downloader requires an instance of an object that conforms to the `Client` interface. The way the HTTP requests are handled is completely decoupled from the downloader implementation, providing maximum control and flexibility To conform to the Client interface, an object should expose `HTTPGet` and `HTTPGetBodyBytes` methods. The service uses a simple wrapper around the Go HTTP transport by default, but you can easily create an implementation of your own, or extend existing functionality. Default client wrapper also has rudimentary socks proxy support.
+
+To create a downloader object, we also need to provide the aforementioned video id, and the reference to the progress update feed (more on this later). Once the downloader object is created, we are ready to download the video from youtube. I won't go too deep into the details here, if you would like to know more about the process I recommend checking out this [amazing article](https://tyrrrz.me/blog/reverse-engineering-youtube).
+
+The download process could be broken down into several steps. First, we need to retrieve video info, so that we can analyze all file formats available for the video, and select the most suitable one. Pretty much all videos are available in multiple file formats. Higher quality videos have separate files for video and audio streams. Since we only need the audio, our perfect case scenario is when we can download only the audio track. Unfortunately, the current version of the service doesn't support any other file formats, so if a video doesn't have an audio track available as a separate file, the download will fail. Video info metadata could be obtained from `https://youtube.com/get_video_info` endpoint. Once we had obtained video info, parsed it, and selected the desired file format, we proceed with an actual download. To obtain the desired file we need is to find out its URL, which is actually hidden in the video info's `cipher` param. If you take a look at what cipher looks like, you'll find out that it looks like some kind of hashed string. And it is, `cipher` is a string containing another set of parameters, one of them being the video URL. The only problem is that youtube doesn't use any conventional hashing algorithm. Instead, string contents are randomly shuffled several times. How do we recover the original string? This is the trickiest part of the entire process. To do so, we need to download the embedded video player js bundle and parse it to find the decipher function that would allow us to generate the URL. The decipher function is a sequence of simple string operations, we'll call them steps here. These steps are "hidden" within the minimized player code, each video has it's unique randomized set of steps. To find them all we apply some serious regexp magic here, take a look at `decipher.go` if you want to see what it looks like. Youtube has made it pretty difficult to figure out the deciphering logic from the minimized player code, but it's not impossible, afterall the player itself relies on this function to obtain the source file for streaming. The operations, their order – all the info we need is already there. Once recovered, the resulting decipher function might look like this:
+
+<Code class='code-block' code={`
+splice:function(a,b){a.splice(0,b)},
+reverse:function(a){a.reverse()},
+EQ:function(a,b){var c=a[0];a[0]=a[b%a.length];a[b%a.length]=c}};
+a=a.split("");
+Mt.splice(a,3);
+Mt.EQ(a,39);
+Mt.splice(a,2);
+Mt.EQ(a,1);
+Mt.splice(a,1);
+Mt.EQ(a,35);
+Mt.EQ(a,51);
+Mt.splice(a,2);
+Mt.reverse(a,52);
+return a.join("")
+`} lang="js" theme={'night-owl'} />
+
+As you can see, we can easily reproduce these operations in Go once we find what we actually need to do. Regexps aren't my strongest suit, so I'm using the decipher code I found in this [great repo](https://github.com/kkdai/youtube). Once we have deciphered the cipher and assembled the URL, all that's left is to download the file. The download process updates are either streamed to the progress feed (more on this later) or printed out to the command line. Once the file has been downloaded, the downloader object is safe to delete.
+
+### Converting video file - transmuxing
+
+The next step is transmuxing the file we just downloaded into HLS format. For this purpose, we create a `transmuxer` object. This object is very similar to downloader in concept, it's purpose is to take care of everything related to transmuxing the file. To convert the file we simply run ffmpeg command-line command using `exec.Command`. Once the file has been converted, we create a special empty "marker" file to indicate that the file has been processed successfully and is ready for streaming. The existence of the converted m3u8 file alone is not enough to tell us that process has been completed successfully. The file could be created even if an error occurred during the conversion process. At this point we're pretty much done, our file is available for streaming.
+
+### Anatomy of a request
+
+As I mentioned above, the service uses echo for handling client requests. Once a client makes an empty get request to an endpoint, the server upgrades a connection to WebSockets. Next, a client sends a video URL using sockets. We extract a video id from the URL, construct an output file path using this id, and check for a completion marker file. As was mentioned previously, the existence of this file signifies that a video has already been downloaded and converted into HLS format, and is already available for streaming. If a completion marker exists, we notify the client and close the connection. Otherwise, we let the client know that the processing will begin. Next, we either create a new process handler for a video. If a process handler for that particular already exists at that point in time, we simply return the existing instance. I will go over how a process handler works in the next section. For now, it's important to note that from this point all that's left is to subscribe to the updates from the process handler and deliver them to a client. Here's what it looks like
+
+
+<Code class='code-block' code={`
+func DownloadAndProcessVideo(ctx echo.Context) error {
+	ws, err := upgrader.Upgrade(ctx.Response(), ctx.Request(), nil)
+	if err != nil {
+		log.Print(err)
+		return nil
+	}
+	defer ws.Close()
+
+	_, url, err := ws.ReadMessage()
+	if err != nil {
+		log.Print(err)
+		if err := ws.WriteJSON(models.ProgressUpdate{Type: models.ERROR}); err != nil {
+			log.Print(err)
+		}
+		return nil
+	}
+
+	videoID, err := utils.ExtractVideoID(string(url))
+	if err != nil {
+		log.Print(err)
+		if err := ws.WriteJSON(models.ProgressUpdate{Type: models.ERROR}); err != nil {
+			log.Print(err)
+		}
+		return nil
+	}
+
+	if files.CheckIfWasProcessed(viper.GetString(consts.OutputDir), videoID) {
+		if ws.WriteJSON(models.ProgressUpdate{Type: models.AUDIO_IS_AVAILABLE, VideoID: videoID}); err != nil {
+			log.Print(err)
+		}
+		return nil
+	}
+
+	if ws.WriteJSON(models.ProgressUpdate{Type: models.REQUEST_ACCEPTED, VideoID: videoID}); err != nil {
+		log.Print(err)
+		return nil
+	}
+
+	progressUpdates := processhandler.GetOrCreateSubscription(client.Get(), videoID)
+	for update := range progressUpdates {
+		if err := ws.WriteJSON(update); err != nil {
+			log.Print(err)
+			break
+		}
+	}
+
+	return nil
+}
+`} lang="go" theme={'night-owl'} />
+
+### Progress update feed and process handler
+
+So what exactly are those mysterious process handler and progress update feed? I'll start with the latter. **Progress feed** is a thread-safe one-to-many data stream container. If this sounds pretty complex, don't worry, I'll explain everything in detail. Let's take a look. `ProgressUpdateFeed` is a struct that has the following properties: a mutex, an array of Go channels called updaters, and a boolean flag signifying if a feed has been closed.
+
+<Code class='code-block' code={`
+type ProgressUpdateFeed struct {
+	mu       sync.RWMutex
+	updaters []chan models.ProgressUpdate
+	closed   bool
+}
+`} lang="go" theme={'night-owl'} />
+
+Then, it has the `Subscribe` method.
+
+<Code class='code-block' code={`
+func (f *ProgressUpdateFeed) Subscribe() <-chan models.ProgressUpdate {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if f.closed {
+		return nil
+	}
+
+	ch := make(chan models.ProgressUpdate)
+	f.updaters = append(f.updaters, ch)
+	return ch
+}
+`} lang="go" theme={'night-owl'} />
+
+As you can see, all it does is it creates a new channel, adds it to the array of updaters, and simply returns it. This way, whenever we send data to the feed, it's sent to all "listeners" or "subscriptions", whichever you prefer to call it. This exactly what `Send` method does.
+
+<Code class='code-block' code={`
+func (f *ProgressUpdateFeed) Send(update models.ProgressUpdate) {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	if f.closed {
+		return
+	}
+
+	for _, ch := range f.updaters {
+		go func(ch chan models.ProgressUpdate) {
+			ch <- update
+		}(ch)
+	}
+}
+`} lang="go" theme={'night-owl'} />
+
+It iterates over all available channels and propagates the data to all those channels. It's important to note that data is sent in a non-blocking manner, meaning if any of the channels isn't ready to receive new data, we don't block to wait for it to become ready and simply move on to sending data to the next channel instead. This also means that data "inside" updaters could be out of sync, one channel might be empty while another might have several updates pending, and this is _by design_. Lastly, it implements `Close` method.
+
+<Code class='code-block' code={`
+func (f *ProgressUpdateFeed) Close() {
+	// TODO: This is a hack to make sure all active channels send updates to clients
+	// before closing
+	time.Sleep(500 * time.Millisecond)
+
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if !f.closed {
+		f.closed = true
+		for _, ch := range f.updaters {
+			go func(c chan models.ProgressUpdate) {
+				// We go through all pending channel updates and "pop" the values
+				// before closing channel in order to avoid panic
+				for {
+					noValuesPending := false
+					select {
+					case _, ok := <-c:
+						if !ok {
+							noValuesPending = true
+						}
+					default:
+						noValuesPending = true
+					}
+					if noValuesPending {
+						break
+					}
+				}
+				close(c)
+			}(ch)
+		}
+	}
+}
+`} lang="go" theme={'night-owl'} />
+
+If we had invoked `Send` and `Close` one right after another, we might encounter a situation when not all updaters receive the data, due to the async nature of the update. To make the closing mechanism more "fair", I have made it wait for an arbitrary number of miliseconds, just to ensure that as many as possible, preferably all, channels receive the data. Next, we iterate over all channels and "pop" any remaining updates using select. This is to ensure that all channels are empty before we close them.
+
+Ok, this is pretty much it for progress update feed, now onto process handler. This is a set of helper methods using progress feed to handle video processing. First, we store `feeds` which is a dictionary of progress feeds where video id acts as a key, and secondly, we store a mutex to ensure there're no race conditions when accessing feeds.
+
+<Code class='code-block' code={`
+var (
+	feeds map[string]*feed.ProgressUpdateFeed
+	mutex sync.RWMutex
+)
+`} lang="go" theme={'night-owl'} />
+
+Here we also have several helper methods. First `GetOrCreateSubscription`, which either creates a new feed, begins video processing(I'll explain what this means in a bit) invoking a `handleProcessing` as a goroutine, and returns a subscription to this newly created feed, or it simply creates a new subscription for the feed if it already exists.
+
+<Code class='code-block' code={`
+func GetOrCreateSubscription(client client.Client, videoID string) <-chan models.ProgressUpdate {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	if feeds == nil {
+		feeds = make(map[string]*feed.ProgressUpdateFeed)
+	}
+
+	p, ok := feeds[videoID]
+	if !ok {
+		feed := feed.New()
+		feeds[videoID] = feed
+
+		newDownloader := downloader.New(client, videoID, feed)
+
+		go handleProcessing(videoID, newDownloader, feed)
+
+		return feed.Subscribe()
+	}
+
+	return p.Subscribe()
+}
+`} lang="go" theme={'night-owl'} />
+
+By "video processing", I mean the entire process of downloading the video and converting it to HLS format, all the steps. `handleProcessing` takes care of just that, as well as sending updates on the state of the process to the corresponding feed on every step. Once the processing is done, the feed is closed and the process handler is removed.
+
+<Code class='code-block' code={`
+func handleProcessing(videoID string, d *downloader.Downloader, f *feed.ProgressUpdateFeed) {
+	defer removeFeed(videoID)
+	defer f.Close()
+
+	ctx := context.Background()
+
+	if viper.GetBool(consts.Debug) {
+		log.Printf("Downloading video with id: %s\n", videoID)
+	}
+
+	if !files.CheckIfWasProcessed(viper.GetString(consts.SourceDir), videoID) {
+		f.Send(models.ProgressUpdate{Type: models.DOWNLOAD_BEGUN, VideoID: videoID})
+		if err := d.RetrieveVideoInfo(ctx); err != nil {
+			log.Print(err)
+			f.Send(models.ProgressUpdate{Type: models.ERROR, Error: err})
+			return
+		}
+		if err := d.DownloadVideo(ctx); err != nil {
+			log.Print(err)
+			f.Send(models.ProgressUpdate{Type: models.ERROR, Error: err})
+			return
+		}
+		f.Send(models.ProgressUpdate{Type: models.DOWNLOAD_FINISHED})
+	}
+
+	f.Send(models.ProgressUpdate{Type: models.TRANSMUXING_BEGUN})
+	sourceFilePath, err := files.GetSourceFilePath(videoID)
+	if err != nil {
+		log.Print(err)
+		f.Send(models.ProgressUpdate{Type: models.ERROR, Error: err})
+		return
+	}
+	t := transmuxer.New(videoID, sourceFilePath)
+	if err := t.ConvertVideo(); err != nil {
+		log.Print(err)
+		f.Send(models.ProgressUpdate{Type: models.ERROR, Error: err})
+		return
+	}
+	f.Send(models.ProgressUpdate{Type: models.TRANSMUXING_FINISHED})
+
+	f.Send(models.ProgressUpdate{Type: models.AUDIO_IS_AVAILABLE, VideoID: videoID})
+
+	if viper.GetBool(consts.Debug) {
+		log.Printf("Video %s\n is ready for streaming!", videoID)
+	}
+}
+
+func removeFeed(videoID string) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	if _, ok := feeds[videoID]; ok {
+		delete(feeds, videoID)
+	}
+}
+`} lang="go" theme={'night-owl'} />
+
+Now, I'd like to provide a little bit of context. Progress feeds allow to intelligently manage multiple video processes. If one client initiates a video processing, and then another client attempts to process the same video, an existing process will be used. The second client will receive all the same updates as the first client starting from the point it made the request. For example, if the first client has initiated a download, and by the time the second client made a request 50% has already been downloaded, the second client will receive updates for download progress for 51% and up. Also, if any or all clients disconnect, the updates will still be delivered, because, as I have mentioned before, `Send` is non-blocking and doesn't sync data between channels. However, this leads to a situation when we might end up with "stale" channels when a client has disconnected, but the channel still exists and still awaits for the data to be "popped" by {'<-'} operator. Thankfully, we handle this when we close the feed by making sure every channel is "empty" before we close it. To sum up, a process is initiated and runs in a "detached" manner. It allows subscribing and unsubscribing to updates on the progress of the video processing at any point in time.
+
+### Conclusion
+
+And that's pretty much all that there's to it. In the end, I'm pretty proud of this project. It was so much fun to research youtube player internals. I also enjoyed designing the progress update feed and process handler quite a lot.
+Feel free to use my code for your own personal projects, and let me know if you have any ideas or suggestions. You can reach out to me via email. And here's a link to the [project repo](https://github.com/AlexKLWS/youtube-audio-stream) again.
+
+_Thank you very much for reading!_

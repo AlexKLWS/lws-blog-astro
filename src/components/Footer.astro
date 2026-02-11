@@ -1,0 +1,70 @@
+---
+import routes from '../consts/routes'
+---
+
+<div class={'footer-container'}>
+  <nav class={'footer-links-container'}>
+    <a href={routes.home} class={'footer-item'}> Home </a>
+    <a href={routes.life} class={'footer-item'}> Life </a>
+    <a href={routes.code} class={'footer-item'}> Code </a>
+    <a href={routes.projects} class={'footer-item'}> Projects </a>
+    <a href={routes.games} class={'footer-item'}> Games </a>
+    <a href={routes.contact} class={'footer-item'}> Contact </a>
+  </nav>
+  <span class={'footer-copyright-name'}>&copy; Alex Korzh</span>
+</div>
+
+<style lang='scss'>
+  @import '../styles/config';
+  @import '../styles/shared-mixins';
+
+  .footer-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: $white-color;
+    margin-top: 2rem;
+  }
+
+  .footer-links-container {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-direction: column;
+
+    @media (min-width: $breakpoint-lg) {
+      flex-direction: row;
+      width: 70%;
+    }
+  }
+
+  .footer-item {
+    @include button;
+    font-size: 13px;
+    border-width: 1px;
+    border-color: $white-color;
+    border-style: solid;
+
+    &:focus {
+      border-color: $secondary-color;
+      border-width: 1px;
+      outline: none;
+    }
+
+    @media (min-width: $breakpoint-lg) {
+      font-size: 16px;
+      line-height: 21px;
+    }
+  }
+
+  .footer-copyright-name {
+    @include normal-mono;
+    font-weight: 300;
+    font-size: 11px;
+    line-height: 25px;
+    margin-bottom: 8px;
+  }
+</style>

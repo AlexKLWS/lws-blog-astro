@@ -1,0 +1,274 @@
+@use "sass:math";
+@import 'config';
+@import 'shared-mixins';
+
+body {
+  margin-top: 0px;
+  background-color: $primary-color;
+  -webkit-font-smoothing: subpixel-antialiased !important;
+  text-rendering: optimizeLegibility !important;
+}
+
+// Fix for Chrome
+p {
+  display: block;
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+}
+
+.code-block {
+  padding: 0rem 0.5rem 1rem 0.5rem;
+
+  ::-moz-selection {
+    /* Code for Firefox */
+    color: inherit;
+    background: $code-select-color;
+  }
+
+  ::selection {
+    color: inherit;
+    background: $code-select-color;
+  }
+}
+
+.app-external-link {
+  color: $primary-color;
+  text-decoration: none;
+  border-bottom: 0.1em solid black;
+}
+
+.app-button {
+  @include button;
+  border-width: 1px;
+  border-color: $white-color;
+  border-style: solid;
+  background-color: $white-color;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:focus {
+    border-color: $secondary-color;
+    border-width: 1px;
+    outline: none;
+  }
+
+  &:active {
+    background-color: $secondary-color-active;
+  }
+
+  &.inactive {
+    color: $secondary-color;
+
+    &:hover {
+      background-color: $white-color;
+    }
+  }
+}
+
+.app-input {
+  @include input-mixin;
+}
+
+.app-title {
+  @include title;
+}
+
+.app-file-input {
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
+}
+
+.app-label {
+  @include normal-mono;
+  margin-left: 10px;
+  margin-right: 15px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.app-skip-link {
+  position: absolute;
+  top: -4rem;
+  left: 0;
+  background: $primary-color;
+  color: $primary-color;
+  padding: 1rem;
+  z-index: 100;
+
+  &:focus {
+    left: 0;
+    top: 0;
+    padding: 3px;
+    background: $white-color;
+    border:1px solid $primary-color;
+  }
+}
+
+::-moz-selection {
+  /* Code for Firefox */
+  color: $primary-color;
+  background: $secondary-color-transparency;
+}
+
+::selection {
+  color: $primary-color;
+  background: $secondary-color-transparency;
+}
+
+// Hamburger
+// ==================================================
+
+_::-webkit-full-page-media,
+_:future,
+:root .Guide-info-location-list-item {
+  padding: 0px 0px 0px 10px;
+}
+
+// Hamburger Settings
+// ==================================================
+$hamburger-padding-x: 15px !default;
+$hamburger-padding-y: 15px !default;
+$hamburger-layer-width: 20px !default;
+$hamburger-layer-height: 2px !default;
+$hamburger-layer-spacing: 4px !default;
+$hamburger-layer-color: #000 !default;
+$hamburger-layer-border-radius: 0px !default;
+$hamburger-hover-opacity: 0.7 !default;
+$hamburger-active-layer-color: $hamburger-layer-color !default;
+$hamburger-active-hover-opacity: $hamburger-hover-opacity !default;
+
+// To use CSS filters as the hover effect instead of opacity,
+// set $hamburger-hover-use-filter as true and
+// change the value of $hamburger-hover-filter accordingly.
+$hamburger-hover-use-filter: false !default;
+$hamburger-hover-filter: opacity(50%) !default;
+$hamburger-active-hover-filter: $hamburger-hover-filter !default;
+
+// Hamburger
+// ==================================================
+.hamburger {
+  position: absolute;
+  padding: $hamburger-padding-y $hamburger-padding-x;
+  display: inline-block;
+  cursor: pointer;
+
+  transition-property: opacity, filter;
+  transition-duration: 0.15s;
+  transition-timing-function: linear;
+
+  // Normalize (<button>)
+  font: inherit;
+  color: inherit;
+  text-transform: none;
+  background-color: transparent;
+  border: 0;
+  margin: 0;
+  overflow: visible;
+  outline: none;
+
+  &:hover {
+    @if $hamburger-hover-use-filter == true {
+      filter: $hamburger-hover-filter;
+    } @else {
+      opacity: $hamburger-hover-opacity;
+    }
+  }
+
+  &.is-active {
+    &:hover {
+      @if $hamburger-hover-use-filter == true {
+        filter: $hamburger-active-hover-filter;
+      } @else {
+        opacity: $hamburger-active-hover-opacity;
+      }
+    }
+
+    .hamburger-inner,
+    .hamburger-inner::before,
+    .hamburger-inner::after {
+      background-color: $hamburger-active-layer-color;
+    }
+  }
+}
+
+.hamburger-box {
+  width: $hamburger-layer-width;
+  height: $hamburger-layer-height * 3 + $hamburger-layer-spacing * 2;
+  display: inline-block;
+  position: relative;
+}
+
+.hamburger-inner {
+  display: block;
+  top: 50%;
+  margin-top: math.div($hamburger-layer-height, -2);
+
+  &,
+  &::before,
+  &::after {
+    width: $hamburger-layer-width;
+    height: $hamburger-layer-height;
+    background-color: $hamburger-layer-color;
+    border-radius: $hamburger-layer-border-radius;
+    position: absolute;
+    transition-property: transform;
+    transition-duration: 0.15s;
+    transition-timing-function: ease;
+  }
+
+  &::before,
+  &::after {
+    content: '';
+    display: block;
+  }
+
+  &::before {
+    top: ($hamburger-layer-spacing + $hamburger-layer-height) * -1;
+  }
+
+  &::after {
+    bottom: ($hamburger-layer-spacing + $hamburger-layer-height) * -1;
+  }
+}
+
+.hamburger--spin {
+  .hamburger-inner {
+    transition-duration: 0.22s;
+    transition-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+
+    &::before {
+      transition: top 0.1s 0.25s ease-in, opacity 0.1s ease-in;
+    }
+
+    &::after {
+      transition: bottom 0.1s 0.25s ease-in, transform 0.22s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+    }
+  }
+
+  &.is-active {
+    .hamburger-inner {
+      transform: rotate(225deg);
+      transition-delay: 0.12s;
+      transition-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+
+      &::before {
+        top: 0;
+        opacity: 0;
+        transition: top 0.1s ease-out, opacity 0.1s 0.12s ease-out;
+      }
+
+      &::after {
+        bottom: 0;
+        transform: rotate(-90deg);
+        transition: bottom 0.1s ease-out, transform 0.22s 0.12s cubic-bezier(0.215, 0.61, 0.355, 1);
+      }
+    }
+  }
+}
