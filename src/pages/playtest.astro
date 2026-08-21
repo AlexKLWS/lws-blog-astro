@@ -1,0 +1,76 @@
+---
+/**
+ * Distant Light Prologue playtest signup.
+ *
+ * Unlisted: nothing links here, it is noindex, and /playtest is disallowed in
+ * robots.txt. To add a future game, copy this file, change the campaign id and
+ * the copy — no service changes needed.
+ */
+import Layout from '../layouts/Layout.astro'
+import PlaytestForm from '../components/PlaytestForm.astro'
+
+const CAMPAIGN = 'distant-light-prologue'
+const GAME_NAME = 'Distant Light Prologue'
+---
+
+<Layout
+  title={`${GAME_NAME} — Playtest Signup`}
+  description={`Request a Steam key for the ${GAME_NAME} playtest.`}
+  noindex={true}
+>
+  <div class='playtest-container'>
+    <h1 class='playtest-title'>Playtest Signup</h1>
+
+    <p class='playtest-intro'>
+      Thanks for offering to playtest <strong>{GAME_NAME}</strong>. Fill this out and a Steam key lands in your inbox
+      within a minute, along with instructions for redeeming it. Keys are limited and go out first come, first served.
+    </p>
+
+    <PlaytestForm campaign={CAMPAIGN} />
+
+    <p class='playtest-footnote'>
+      Your email is used only to send the key and, if you ticked the box, one feedback form afterwards. Nothing else,
+      no list, no sharing.
+    </p>
+  </div>
+</Layout>
+
+<style lang='scss'>
+  @import '../styles/config';
+  @import '../styles/shared-mixins';
+
+  .playtest-title {
+    @include title;
+    padding-top: 61px;
+  }
+
+  .playtest-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 720px;
+    padding-bottom: 60px;
+  }
+
+  .playtest-intro {
+    @include normal;
+    font-size: 15px;
+    max-width: 620px;
+    padding: 10px 24px 30px;
+    text-align: center;
+
+    @media (min-width: $breakpoint-lg) {
+      font-size: 16px;
+    }
+  }
+
+  .playtest-footnote {
+    @include normal-mono;
+    font-size: 11px;
+    line-height: 20px;
+    color: $figcaption-color;
+    text-align: center;
+    max-width: 480px;
+    padding: 32px 24px 0px;
+  }
+</style>

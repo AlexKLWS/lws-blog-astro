@@ -18,9 +18,10 @@ interface Props {
   tag?: string
   property?: string
   contentType?: string
+  noindex?: boolean
 }
 
-const { title, description, tag, property, contentType } = Astro.props
+const { title, description, tag, property, contentType, noindex } = Astro.props
 
 const fullUrl = import.meta.env.SITE + Astro.url.pathname
 ---
@@ -45,6 +46,7 @@ const fullUrl = import.meta.env.SITE + Astro.url.pathname
     <meta property='vk:image' content={OPEN_GRAPH_IMAGE} />
     <script defer data-domain='blog.longwintershadows.com' src='https://plausible.io/js/script.js'></script>
     <meta name='generator' content={Astro.generator} />
+    {noindex && <meta name='robots' content='noindex, nofollow' />}
     {contentType && <meta content={contentType} property='og:type' />}
     {property && <meta property={property} />}
     <title>{title || DEFAULT_TITLE}</title>

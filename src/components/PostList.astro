@@ -11,7 +11,7 @@ const { posts, pageNumber = 1, prevPageUrl = null, nextPageUrl = null, lastPage 
     {
       posts.map((post: any) => (
         <PostPreviewCard
-          url={`${routes.postRoute}${post.slug}`}
+          url={`${routes.postRoute}${post.id}`}
           title={post.data.title}
           subtitle={post.data.subtitle}
           icon={post.data.icon}

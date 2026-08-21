@@ -1,0 +1,25 @@
+{
+  "name": "player-signup-automation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Multi-game playtest key service: claims a Steam key from Firestore and emails it out.",
+  "main": "index.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "functions-framework --target=playtestSignup",
+    "dev": "functions-framework --target=playtestSignup --port=8080",
+    "campaigns": "node scripts/list-campaigns.js",
+    "create-campaign": "node scripts/create-campaign.js",
+    "import-keys": "node scripts/import-keys.js",
+    "stats": "node scripts/stats.js",
+    "export": "node scripts/export-signups.js",
+    "retry-failed": "node scripts/retry-failed.js"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^7.11.0",
+    "@google-cloud/functions-framework": "^3.4.5"
+  }
+}

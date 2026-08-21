@@ -19,3 +19,8 @@ pnpm-debug.log*
 
 # macOS-specific files
 .DS_Store
+
+# steam keys — never commit these
+playtest-service/keys/
+*.keys.txt
+signups*.csv

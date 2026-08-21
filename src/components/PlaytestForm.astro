@@ -1,0 +1,242 @@
+---
+/**
+ * Reusable playtest signup form.
+ *
+ * Adding a future game needs no changes here — create a campaign in Firestore
+ * (`npm run create-campaign`) and add a page that renders this with the matching
+ * `campaign` id. All game-specific copy in the email comes from that document.
+ */
+interface Props {
+  /** Firestore campaign id, e.g. 'distant-light-prologue'. */
+  campaign: string
+  /** Shown on the submit button. */
+  submitLabel?: string
+}
+
+const { campaign, submitLabel = 'Send me a key' } = Astro.props
+
+// Set both in the Cloudflare Pages build environment (and in .env for local dev).
+// PUBLIC_ vars are inlined into the built JS — the Turnstile *site* key is meant
+// to be public, but never put the Turnstile secret or Resend key here.
+const endpoint = import.meta.env.PUBLIC_PLAYTEST_ENDPOINT
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY
+---
+
+<script is:inline src='https://challenges.cloudflare.com/turnstile/v0/api.js' async defer></script>
+
+<form class='playtest-form' novalidate data-endpoint={endpoint} data-campaign={campaign}>
+  <label class='playtest-label' for='name'>
+    First name, nickname, full name, or however you'd like to be referred
+  </label>
+  <input class='playtest-input' type='text' id='name' name='name' maxlength='100' autocomplete='name' required />
+
+  <label class='playtest-label' for='email'>Email</label>
+  <input class='playtest-input' type='email' id='email' name='email' maxlength='254' autocomplete='email' required />
+  <span class='playtest-hint'>This is where the key goes, so double-check it.</span>
+
+  <label class='playtest-checkbox-row'>
+    <input class='playtest-checkbox' type='checkbox' id='willFillForm' name='willFillForm' />
+    <span>After completion of the game I would like to fill out a form</span>
+  </label>
+
+  {/* Honeypot: hidden from people, irresistible to bots. Never remove. */}
+  <div class='playtest-hp' aria-hidden='true'>
+    <label for='website'>Website</label>
+    <input type='text' id='website' name='website' tabindex='-1' autocomplete='off' />
+  </div>
+
+  {turnstileSiteKey && <div class='cf-turnstile playtest-turnstile' data-sitekey={turnstileSiteKey} data-theme='light' />}
+
+  <button class='playtest-submit' type='submit'>{submitLabel}</button>
+
+  <p class='playtest-status' role='status' aria-live='polite'></p>
+</form>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>('.playtest-form').forEach((form) => {
+    const submitButton = form.querySelector<HTMLButtonElement>('.playtest-submit')
+    const status = form.querySelector<HTMLElement>('.playtest-status')
+
+    const setStatus = (message: string, tone: 'error' | 'success' | 'muted') => {
+      if (!status) return
+      status.textContent = message
+      status.dataset.tone = tone
+    }
+
+    // Turnstile is loaded async, so it may not exist yet when this runs.
+    const resetTurnstile = () => {
+      ;(window as any).turnstile?.reset?.()
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault()
+      if (!submitButton || submitButton.disabled) return
+
+      const { endpoint, campaign } = form.dataset
+      if (!endpoint || !campaign) {
+        setStatus('The signup form is misconfigured. Please email me instead.', 'error')
+        return
+      }
+
+      const data = new FormData(form)
+      const name = String(data.get('name') ?? '').trim()
+      const email = String(data.get('email') ?? '').trim()
+
+      if (!name) {
+        setStatus('Please tell me what to call you.', 'error')
+        return
+      }
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        setStatus('That email address does not look right.', 'error')
+        return
+      }
+
+      submitButton.disabled = true
+      setStatus('Sending…', 'muted')
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            campaign,
+            name,
+            email,
+            willFillForm: data.get('willFillForm') === 'on',
+            website: String(data.get('website') ?? ''),
+            turnstileToken: String(data.get('cf-turnstile-response') ?? ''),
+          }),
+        })
+
+        const result = await response.json().catch(() => ({}))
+
+        if (response.ok && result.ok) {
+          form.querySelectorAll('.playtest-form > *:not(.playtest-status)').forEach((el) => {
+            ;(el as HTMLElement).style.display = 'none'
+          })
+          setStatus(
+            result.alreadyRegistered
+              ? 'You already had a key — I have just resent it to that address. Check your inbox and your spam folder.'
+              : 'Done. Your key is on its way — check your inbox, and your spam folder if it is not there in a few minutes.',
+            'success',
+          )
+          return
+        }
+
+        setStatus(result.message ?? 'Something went wrong. Please try again in a moment.', 'error')
+      } catch {
+        setStatus('Could not reach the server. Check your connection and try again.', 'error')
+      } finally {
+        submitButton.disabled = false
+        resetTurnstile()
+      }
+    })
+  })
+</script>
+
+<style lang='scss'>
+  @import '../styles/config';
+  @import '../styles/shared-mixins';
+
+  .playtest-form {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 480px;
+    padding: 0px 24px;
+  }
+
+  .playtest-label {
+    @include normal-mono;
+    font-size: 13px;
+    font-weight: 600;
+    padding-bottom: 8px;
+    color: $primary-color;
+  }
+
+  .playtest-input {
+    @include input-mixin;
+    border-style: solid;
+    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .playtest-hint {
+    @include normal-mono;
+    font-size: 12px;
+    color: $figcaption-color;
+    margin-top: -16px;
+    margin-bottom: 24px;
+  }
+
+  .playtest-checkbox-row {
+    @include normal;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+    line-height: 22px;
+    margin-bottom: 24px;
+    cursor: pointer;
+  }
+
+  .playtest-checkbox {
+    margin: 3px 0px 0px;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    accent-color: $primary-color;
+    cursor: pointer;
+  }
+
+  // Off-screen rather than display:none — some bots skip hidden inputs.
+  .playtest-hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .playtest-turnstile {
+    margin-bottom: 20px;
+  }
+
+  .playtest-submit {
+    @include button;
+    justify-content: center;
+    background-color: $white-color;
+    border: 1px solid $primary-color;
+    font-size: 16px;
+    padding: 12px 10px;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+      background-color: $white-color;
+    }
+  }
+
+  .playtest-status {
+    @include normal-mono;
+    font-size: 13px;
+    line-height: 21px;
+    text-align: center;
+    margin: 20px 0px 0px;
+    min-height: 21px;
+
+    &[data-tone='error'] {
+      color: $red-color;
+    }
+
+    &[data-tone='muted'] {
+      color: $figcaption-color;
+    }
+
+    &[data-tone='success'] {
+      color: $primary-color;
+      font-weight: 600;
+    }
+  }
+</style>
