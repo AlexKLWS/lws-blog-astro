@@ -40,9 +40,9 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY
   </label>
 
   <p class='playtest-discord'>
-    Also please make sure to
+    Also please make sure to&nbsp;
     <a href='https://discord.gg/umSkthTfJX' target='_blank' rel='noopener noreferrer'>join the discord server</a>
-    if you haven't yet!
+    &nbsp;if you haven't yet!
   </p>
 
   {/* Honeypot: hidden from people, irresistible to bots. Never remove. */}
@@ -177,7 +177,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY
   }
 
   .playtest-checkbox-row {
-    @include normal;
+    @include normal-mono;
     @include transition-ease;
     display: flex;
     align-items: center;
@@ -219,6 +219,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY
 
   .playtest-discord {
     @include normal-mono;
+    text-align: center;
     font-size: 13px;
     line-height: 21px;
     margin: 0px 0px 24px;
