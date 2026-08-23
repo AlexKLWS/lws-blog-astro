@@ -39,12 +39,6 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY
     <span class='playtest-checkbox-text'>After completion of the game I would like to fill out a form</span>
   </label>
 
-  <p class='playtest-discord'>
-    Also please make sure to&nbsp;
-    <a href='https://discord.gg/umSkthTfJX' target='_blank' rel='noopener noreferrer'>join the discord server</a>
-    &nbsp;if you haven't yet!
-  </p>
-
   {/* Honeypot: hidden from people, irresistible to bots. Never remove. */}
   <div class='playtest-hp' aria-hidden='true'>
     <label for='website'>Website</label>
@@ -54,6 +48,12 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY
   {turnstileSiteKey && <div class='cf-turnstile playtest-turnstile' data-sitekey={turnstileSiteKey} data-theme='light' />}
 
   <button class='playtest-submit' type='submit'>{submitLabel}</button>
+
+  <p class='playtest-discord'>
+    Also, please make sure to&nbsp;
+    <a href='https://discord.gg/umSkthTfJX' target='_blank' rel='noopener noreferrer'>join the Discord server</a>
+    &nbsp;if you haven't yet!
+  </p>
 
   <p class='playtest-status' role='status' aria-live='polite'></p>
 </form>
@@ -117,7 +117,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY
         const result = await response.json().catch(() => ({}))
 
         if (response.ok && result.ok) {
-          form.querySelectorAll('.playtest-form > *:not(.playtest-status, .playtest-discord)').forEach((el) => {
+          form.querySelectorAll('.playtest-form > *:not(.playtest-status):not(.playtest-discord)').forEach((el) => {
             ;(el as HTMLElement).style.display = 'none'
           })
           setStatus(
@@ -204,7 +204,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY
   }
 
   .playtest-checkbox-text {
-    font-weight: 700;
+    font-weight: 600;
     color: $primary-color;
   }
 
@@ -218,11 +218,11 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY
   }
 
   .playtest-discord {
-    @include normal-mono;
+    @include normal;
     text-align: center;
-    font-size: 13px;
+    font-size: 16px;
     line-height: 21px;
-    margin: 0px 0px 24px;
+    margin: 32px 0px 0px;
     color: $figcaption-color;
 
     a {
@@ -265,7 +265,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY
     font-size: 13px;
     line-height: 21px;
     text-align: center;
-    margin: 20px 0px 0px;
+    margin: 12px 0px 0px;
     min-height: 21px;
 
     &[data-tone='error'] {
