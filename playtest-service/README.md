@@ -152,7 +152,9 @@ these out of spam folders. One verified domain covers every future game.
 ## 4. Turnstile
 
 1. Cloudflare dashboard → **Turnstile** → **Add widget**.
-2. Hostnames: `blog.longwintershadows.com` and `localhost`.
+2. Hostnames: `blog.longwintershadows.com`, `longwintershadows.com` and
+   `localhost`. Every domain the form is served from must be listed here, or
+   the widget refuses to render and the form cannot submit.
 3. Widget mode: **Managed**.
 4. You get a **site key** (public, goes in the Astro build) and a **secret key**
    (goes in Secret Manager). One widget covers every game's form.
@@ -194,9 +196,13 @@ gcloud run deploy playtest-signup \
   --max-instances 3 \
   --concurrency 10 \
   --timeout 60 \
-  --set-env-vars 'ALLOWED_ORIGINS=https://blog.longwintershadows.com,FROM_EMAIL=Long Winter Shadows <playtest@longwintershadows.com>,REPLY_TO_EMAIL=alex@longwintershadows.com' \
+  --set-env-vars '^|^ALLOWED_ORIGINS=https://blog.longwintershadows.com,https://longwintershadows.com|FROM_EMAIL=Long Winter Shadows <playtest@longwintershadows.com>|REPLY_TO_EMAIL=alex@longwintershadows.com' \
   --set-secrets 'RESEND_API_KEY=resend-api-key:latest,TURNSTILE_SECRET_KEY=turnstile-secret-key:latest'
 ```
+
+The `^|^` prefix tells gcloud to separate variables on `|` instead of `,`, which
+is required because `ALLOWED_ORIGINS` is itself a comma-separated list. Don't use
+`^@^` here — the `FROM_EMAIL` value contains an `@`.
 
 `--allow-unauthenticated` is required: the form is called from a browser by
 anonymous visitors. Turnstile, the honeypot, the per-IP rate limit and the
@@ -257,6 +263,112 @@ npm run stats -- --campaign=distant-light-prologue
 
 Available count should have dropped by one. Submit the same email again — you
 should get the *same* key back and the count should not move.
+
+---
+
+# Updating the deployed service
+
+There is one service, `playtest-signup`, in region `europe-west1`. Everything
+below runs from this directory (`playtest-service/`).
+
+Check what is live before and after any change:
+
+```sh
+gcloud config set project player-signup-automation
+
+gcloud run services describe playtest-signup --region europe-west1 \
+  --format='table(spec.template.spec.containers[0].env[].name, spec.template.spec.containers[0].env[].value)'
+```
+
+Remember that **most changes need no deploy at all** — campaign copy, opening
+and closing signups, and adding a new game are all Firestore edits made with the
+`npm run` scripts above.
+
+## Redeploy after a code change
+
+```sh
+gcloud run deploy playtest-signup --source . --region europe-west1
+```
+
+Everything else — service account, scaling, env vars, secrets — is carried over
+from the previous revision, so the flags from the first deploy do not need
+repeating. Cloud Build takes a couple of minutes and traffic switches to the new
+revision only once it passes its health check.
+
+## Change an environment variable
+
+`--update-env-vars` edits one variable in place and starts a new revision from
+the **existing image**, so it takes seconds and does not rebuild anything:
+
+```sh
+gcloud run services update playtest-signup --region europe-west1 \
+  --update-env-vars '^|^ALLOWED_ORIGINS=https://blog.longwintershadows.com,https://longwintershadows.com'
+```
+
+The `^|^` prefix changes gcloud's separator from `,` to `|`. Without it gcloud
+reads each origin as a separate variable and the command fails. Use `^|^` rather
+than the more commonly seen `^@^`, because email-shaped values here contain `@`.
+
+Use `--set-env-vars` only when you intend to replace the *entire* set of
+variables; `--update-env-vars` leaves the others alone, and
+`--remove-env-vars NAME` deletes one.
+
+> **The env var wins over the code.** `src/config.js` has defaults for every
+> setting, but any variable set on the service overrides its default. Editing
+> the fallback in `config.js` and redeploying does **nothing** while the same
+> variable is set in Cloud Run — you must update it here as well. This is the
+> usual reason a change appears to have no effect.
+
+## Rotate a secret
+
+Secrets are mounted as `:latest`, so adding a new version is enough — but the
+running revision keeps the value it started with, so it needs a restart:
+
+```sh
+printf 're_NEW_KEY' | gcloud secrets versions add resend-api-key --data-file=-
+gcloud run services update playtest-signup --region europe-west1 \
+  --update-secrets 'RESEND_API_KEY=resend-api-key:latest'
+```
+
+## Adding a domain that serves the form
+
+Three places have to agree, and missing any one of them breaks the form:
+
+1. **`ALLOWED_ORIGINS`** on the Cloud Run service — otherwise the browser
+   blocks the response as a CORS error. Origins are exact and scheme-sensitive:
+   `https://longwintershadows.com` does not cover `https://www.longwintershadows.com`.
+2. **Turnstile hostnames** in the Cloudflare dashboard (setup step 4) — otherwise
+   the widget will not render and there is no token to submit.
+3. **`PUBLIC_PLAYTEST_ENDPOINT`** in the Cloudflare Pages project serving that
+   domain, followed by a Pages rebuild (setup step 8), since it is baked in at
+   build time.
+
+Keep the default in `src/config.js` in step with the deployed value so local
+development and a fresh deploy behave the same.
+
+## Verify and roll back
+
+Confirm CORS for the new origin with a preflight — a successful response echoes
+the origin back:
+
+```sh
+curl -si -X OPTIONS https://playtest-signup-xxxxxxxx-ew.a.run.app \
+  -H 'Origin: https://longwintershadows.com' \
+  -H 'Access-Control-Request-Method: POST' | grep -i 'access-control-allow-origin'
+```
+
+No `access-control-allow-origin` header means the origin is not in the list.
+
+```sh
+gcloud run revisions list --service playtest-signup --region europe-west1
+gcloud run services logs read playtest-signup --region europe-west1 --limit 50
+
+# roll all traffic back to a known-good revision
+gcloud run services update-traffic playtest-signup --region europe-west1 \
+  --to-revisions playtest-signup-00007-abc=100
+```
+
+Old revisions are kept, so a rollback is instant and does not rebuild.
 
 ---
 

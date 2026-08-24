@@ -35,7 +35,7 @@ export const COLLECTIONS = {
 // headers back, which stops the form from being embedded on someone else's page.
 export const allowedOrigins = optional(
   'ALLOWED_ORIGINS',
-  'https://blog.longwintershadows.com,http://localhost:4321',
+  'https://blog.longwintershadows.com,https://longwintershadows.com,http://localhost:4321',
 )
   .split(',')
   .map((origin) => origin.trim())
