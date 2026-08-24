@@ -147,6 +147,9 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY
   .playtest-form {
     display: flex;
     flex-direction: column;
+    // Without border-box the side padding is added on top of width:100%, which
+    // pushes the form past the viewport on mobile.
+    box-sizing: border-box;
     width: 100%;
     max-width: 480px;
     padding: 0px 24px;
@@ -243,6 +246,19 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY
 
   .playtest-turnstile {
     margin-bottom: 20px;
+    max-width: 100%;
+
+    // Turnstile injects a fixed 300px iframe, which is wider than the form on
+    // the narrowest phones — scale it down there rather than let it overflow.
+    @media (max-width: 359px) {
+      height: 65px;
+      overflow: hidden;
+
+      :global(iframe) {
+        transform: scale(0.85);
+        transform-origin: left top;
+      }
+    }
   }
 
   .playtest-submit {

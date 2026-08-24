@@ -41,13 +41,16 @@ const GAME_NAME = 'Distant Light Prologue'
 
   .playtest-title {
     @include title;
-    padding-top: 61px;
+    padding: 61px 24px 36px;
   }
 
   .playtest-container {
     display: flex;
     flex-direction: column;
     align-items: center;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
     min-height: 720px;
     padding-bottom: 60px;
   }
