@@ -17,13 +17,16 @@ const main = async () => {
 
   const snapshot = await signupsCollection(campaignId).orderBy('createdAt').get()
 
-  const rows = [['email', 'name', 'will_fill_form', 'key_code', 'delivery_status', 'created_at']]
+  const rows = [
+    ['email', 'name', 'will_fill_form', 'credits_opt_in', 'key_code', 'delivery_status', 'created_at'],
+  ]
   for (const doc of snapshot.docs) {
     const createdAt = doc.get('createdAt')
     rows.push([
       doc.get('email'),
       doc.get('name'),
       doc.get('willFillForm') ? 'yes' : 'no',
+      doc.get('creditsOptIn') ? 'yes' : 'no',
       doc.get('keyCode'),
       doc.get('delivery.status'),
       createdAt?.toDate?.().toISOString() ?? '',

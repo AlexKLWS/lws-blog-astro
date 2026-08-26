@@ -19,7 +19,12 @@ const activationSteps = (gameName) => [
 
 const feedbackSentence = "You ticked the box saying you'd fill out a form once you finish the game — thank you, that genuinely matters for a solo project."
 
-const buildHtml = ({ campaign, name, keyCode, willFillForm }) => {
+// Echoing the exact name back gives people a chance to correct the spelling
+// before it is set in the credits.
+const creditsSentence = (name) =>
+  `You asked to be included in the credits, so you'll be listed there as ${name}.`
+
+const buildHtml = ({ campaign, name, keyCode, willFillForm, creditsOptIn }) => {
   const steps = activationSteps(escapeHtml(campaign.gameName))
     .map((step) => `<li style="margin-bottom:8px;">${step}</li>`)
     .join('')
@@ -30,6 +35,10 @@ const buildHtml = ({ campaign, name, keyCode, willFillForm }) => {
       ? `<p style="margin:24px 0 0;">${feedbackSentence} Here it is, whenever you get there:<br />
          <a href="${escapeHtml(campaign.feedbackFormUrl)}">${escapeHtml(campaign.feedbackFormUrl)}</a></p>`
       : `<p style="margin:24px 0 0;">${feedbackSentence} I'll email you the form separately.</p>`
+
+  const creditsBlock = creditsOptIn
+    ? `<p style="margin:24px 0 0;">${creditsSentence(`<strong>${escapeHtml(name)}</strong>`)} If you'd rather it read differently — or would rather not be listed after all — just reply and tell me.</p>`
+    : ''
 
   const steamBlock = campaign.steamAppUrl
     ? `<p style="margin:0 0 16px;">The Steam page, if you want to wishlist or follow along:<br />
@@ -56,6 +65,7 @@ const buildHtml = ({ campaign, name, keyCode, willFillForm }) => {
 
       ${steamBlock}
       ${feedbackBlock}
+      ${creditsBlock}
 
       <p style="margin:24px 0 0;">If anything breaks, crashes, or just feels off, reply straight to this email — bug reports from playtesters are the most useful thing I get.</p>
 
@@ -68,7 +78,7 @@ const buildHtml = ({ campaign, name, keyCode, willFillForm }) => {
 </html>`
 }
 
-const buildText = ({ campaign, name, keyCode, willFillForm }) => {
+const buildText = ({ campaign, name, keyCode, willFillForm, creditsOptIn }) => {
   const steps = activationSteps(campaign.gameName)
     .map((step, index) => `  ${index + 1}. ${step.replace(/<\/?strong>/g, '')}`)
     .join('\n')
@@ -78,6 +88,10 @@ const buildText = ({ campaign, name, keyCode, willFillForm }) => {
     : campaign.feedbackFormUrl
       ? `\n${feedbackSentence} Here it is:\n${campaign.feedbackFormUrl}\n`
       : `\n${feedbackSentence} I'll email you the form separately.\n`
+
+  const creditsBlock = creditsOptIn
+    ? `\n${creditsSentence(name)} If you'd rather it read differently - or would rather not be listed after all - just reply and tell me.\n`
+    : ''
 
   const steamBlock = campaign.steamAppUrl
     ? `\nThe Steam page, if you want to wishlist or follow along:\n${campaign.steamAppUrl}\n`
@@ -96,7 +110,7 @@ ${steps}
 
 You can also redeem it in a browser at:
 https://store.steampowered.com/account/registerkey
-${steamBlock}${feedbackBlock}
+${steamBlock}${feedbackBlock}${creditsBlock}
 If anything breaks, crashes, or just feels off, reply straight to this email -
 bug reports from playtesters are the most useful thing I get.
 
@@ -112,14 +126,14 @@ because you requested a key at ${campaign.siteName}.
  * Sends the key email via Resend. Throws on any non-2xx so the caller can mark
  * the signup as undelivered and retry later.
  */
-export const sendKeyEmail = async ({ campaign, to, name, keyCode, willFillForm }) => {
+export const sendKeyEmail = async ({ campaign, to, name, keyCode, willFillForm, creditsOptIn }) => {
   const payload = {
     from: campaign.fromEmail,
     to: [to],
     reply_to: campaign.replyTo,
     subject: campaign.emailSubject || `Your ${campaign.gameName} playtest key`,
-    html: buildHtml({ campaign, name, keyCode, willFillForm }),
-    text: buildText({ campaign, name, keyCode, willFillForm }),
+    html: buildHtml({ campaign, name, keyCode, willFillForm, creditsOptIn }),
+    text: buildText({ campaign, name, keyCode, willFillForm, creditsOptIn }),
   }
 
   const response = await fetch(RESEND_URL, {

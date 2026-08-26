@@ -56,7 +56,7 @@ functions.http('playtestSignup', async (req, res) => {
     throw error
   }
 
-  const { campaignId, email, name, willFillForm, turnstileToken, honeypot } = signupRequest
+  const { campaignId, email, name, willFillForm, creditsOptIn, turnstileToken, honeypot } = signupRequest
 
   // A filled honeypot means a bot. Answer with a plausible success so it has no
   // signal to learn from, but hand out nothing.
@@ -108,7 +108,15 @@ functions.http('playtestSignup', async (req, res) => {
   let claim
   try {
     await enforceRateLimit(ip)
-    claim = await claimKeyForSignup({ campaignId, email, name, willFillForm, ip, userAgent: req.headers['user-agent'] })
+    claim = await claimKeyForSignup({
+      campaignId,
+      email,
+      name,
+      willFillForm,
+      creditsOptIn,
+      ip,
+      userAgent: req.headers['user-agent'],
+    })
   } catch (error) {
     if (error instanceof RateLimitedError) {
       res.status(429).json({
@@ -141,6 +149,7 @@ functions.http('playtestSignup', async (req, res) => {
       name: signup.name,
       keyCode: signup.keyCode,
       willFillForm: signup.willFillForm,
+      creditsOptIn: signup.creditsOptIn,
     })
     await recordDeliverySuccess(campaignId, email)
   } catch (error) {

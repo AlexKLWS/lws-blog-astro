@@ -38,6 +38,7 @@ const main = async () => {
         name: doc.get('name'),
         keyCode: doc.get('keyCode'),
         willFillForm: doc.get('willFillForm'),
+        creditsOptIn: doc.get('creditsOptIn'),
       })
       await recordDeliverySuccess(campaignId, email)
       console.log(`  sent -> ${email}`)

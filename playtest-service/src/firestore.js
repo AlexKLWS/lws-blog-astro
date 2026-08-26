@@ -67,6 +67,23 @@ export const enforceRateLimit = async (ip) => {
 }
 
 /**
+ * Which answers a resubmission should change on an existing signup.
+ *
+ * A field that was never written reads back as `undefined`, so a record created
+ * before a question existed differs from `false` and gets backfilled the first
+ * time that person resubmits. Returning an empty object means "nothing to do",
+ * which keeps a plain resend from writing at all.
+ *
+ * Pure and exported so it can be tested without Firestore.
+ */
+export const preferenceUpdates = (existingData, { willFillForm, creditsOptIn }) => {
+  const updates = {}
+  if (existingData.willFillForm !== willFillForm) updates.willFillForm = willFillForm
+  if (existingData.creditsOptIn !== creditsOptIn) updates.creditsOptIn = creditsOptIn
+  return updates
+}
+
+/**
  * Claims the next available key for this email, atomically.
  *
  * The whole point of the transaction is that two people submitting at the same
@@ -79,14 +96,41 @@ export const enforceRateLimit = async (ip) => {
  *
  * @returns {{ signup: object, alreadyRegistered: boolean }}
  */
-export const claimKeyForSignup = async ({ campaignId, email, name, willFillForm, ip, userAgent }) => {
+export const claimKeyForSignup = async ({ campaignId, email, name, willFillForm, creditsOptIn, ip, userAgent }) => {
   const db = getDb()
   const signupRef = signupsCollection(campaignId).doc(emailToDocId(email))
 
   return db.runTransaction(async (tx) => {
     const existing = await tx.get(signupRef)
     if (existing.exists) {
-      return { signup: { id: existing.id, ...existing.data() }, alreadyRegistered: true }
+      // Idempotent on the *key*, not on the answers: a resubmission never issues
+      // a second key, but it does let someone correct a checkbox — or answer a
+      // question that did not exist when they first signed up.
+      const data = existing.data()
+      const updates = preferenceUpdates(data, { willFillForm, creditsOptIn })
+
+      if (Object.keys(updates).length > 0) {
+        tx.update(signupRef, { ...updates, updatedAt: FieldValue.serverTimestamp() })
+
+        // Mirror onto the key's claim record so the two never disagree. set/merge
+        // rather than update: it deep-merges the nested map, and cannot throw
+        // NOT_FOUND and cost this person their resend if the key doc is missing.
+        const keyId = data.keyId
+        if (keyId) {
+          tx.set(
+            keysCollection(campaignId).doc(keyId),
+            { claimedBy: { willFillForm, creditsOptIn } },
+            { merge: true },
+          )
+        }
+      }
+
+      // Return the new answers, so the resent email reflects what they just
+      // ticked rather than what was stored a moment ago.
+      return {
+        signup: { id: existing.id, ...data, willFillForm, creditsOptIn },
+        alreadyRegistered: true,
+      }
     }
 
     // Doc IDs are zero-padded and sequential (key-000001), so ordering by
@@ -108,7 +152,7 @@ export const claimKeyForSignup = async ({ campaignId, email, name, willFillForm,
     tx.update(keyDoc.ref, {
       status: 'claimed',
       claimedAt: FieldValue.serverTimestamp(),
-      claimedBy: { email, name, willFillForm },
+      claimedBy: { email, name, willFillForm, creditsOptIn },
     })
 
     const signup = {
@@ -116,6 +160,7 @@ export const claimKeyForSignup = async ({ campaignId, email, name, willFillForm,
       email,
       name,
       willFillForm,
+      creditsOptIn,
       keyId: keyDoc.id,
       keyCode: keyDoc.get('code'),
       ip: ip ? hashIp(ip) : null,

@@ -62,6 +62,7 @@ export const parseSignupRequest = (body) => {
     email,
     name,
     willFillForm: body.willFillForm === true,
+    creditsOptIn: body.creditsOptIn === true,
     turnstileToken,
     // Hidden field: real users never see it, so anything in it means a bot.
     honeypot: String(body.website ?? '').trim(),

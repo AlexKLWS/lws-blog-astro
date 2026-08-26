@@ -89,15 +89,16 @@ campaigns/distant-light-prologue
   │     batch:     "batch1.txt"
   │     status:    "available" | "claimed"
   │     seq:       1
-  │     claimedBy: { email, name, willFillForm }
+  │     claimedBy: { email, name, willFillForm, creditsOptIn }
   │     claimedAt: <timestamp>
   │
   └── signups/{email}
-        campaignId, email, name, willFillForm
+        campaignId, email, name, willFillForm, creditsOptIn
         keyId, keyCode
         ip:       <sha256 prefix, not the raw address>
         delivery: { status: "pending"|"sent"|"failed", attempts, lastError, sentAt }
         createdAt
+        updatedAt                    # only present if they changed an answer later
 
 rateLimits/{hashed-ip}
   count, windowStart               # shared across all campaigns
@@ -377,9 +378,24 @@ Old revisions are kept, so a rollback is instant and does not rebuild.
 ```sh
 npm run campaigns                                          # overview of everything
 npm run stats -- --campaign=distant-light-prologue
-npm run export -- --campaign=distant-light-prologue > signups.csv
+npm run --silent export -- --campaign=distant-light-prologue > signups.csv
 npm run retry-failed -- --campaign=distant-light-prologue  # needs RESEND_API_KEY
 ```
+
+`--silent` matters on both of these: without it npm prints its `> node scripts/…`
+banner to **stdout**, which lands in the CSV above the header row.
+
+The credits list comes out of the same CSV — `credits_opt_in` is the column,
+and `name` is exactly what the person asked to be called:
+
+```sh
+# proper CSV parsing, so names containing commas survive
+npm run --silent export -- --campaign=distant-light-prologue | python3 -c \
+  "import csv,sys; [print(r['name']) for r in csv.DictReader(sys.stdin) if r['credits_opt_in']=='yes']"
+```
+
+Names are echoed back in the key email, so corrections arrive as replies before
+you build the list.
 
 Closing signups when a playtest ends — the form then shows a polite refusal
 instead of erroring:
@@ -399,6 +415,20 @@ npm run create-campaign -- --campaign=distant-light-prologue --feedback=https://
 People who signed up *before* you set it still have `willFillForm: true` in
 Firestore — `npm run export` gives you their addresses to mail separately.
 Campaign edits take up to 60s to take effect (the service caches them briefly).
+
+### Changing an answer
+
+Submitting the form again with an address that already has a key does **not**
+issue a second key — it resends the same one. What it *does* update is the
+checkbox answers, so someone can opt into the credits (or back out of them)
+without you touching Firestore, and the resent email reflects the new answers
+immediately.
+
+That also means adding a new question later needs no migration. Records written
+before the question existed simply lack the field, which reads as `false`
+everywhere, and get backfilled the first time that person resubmits. Point the
+people you already have at the form again and their answers catch up on their
+own.
 
 ## Local development
 

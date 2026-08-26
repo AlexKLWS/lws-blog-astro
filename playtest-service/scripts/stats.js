@@ -20,10 +20,12 @@ const main = async () => {
 
   const delivery = { sent: 0, pending: 0, failed: 0 }
   let willFillForm = 0
+  let creditsOptIn = 0
   for (const doc of signups.docs) {
     const status = doc.get('delivery.status') || 'pending'
     delivery[status] = (delivery[status] || 0) + 1
     if (doc.get('willFillForm')) willFillForm += 1
+    if (doc.get('creditsOptIn')) creditsOptIn += 1
   }
 
   console.log(`Campaign: ${campaignId}`)
@@ -36,6 +38,7 @@ const main = async () => {
   console.log(`  email pending:    ${delivery.pending}`)
   console.log(`  email FAILED:     ${delivery.failed}`)
   console.log(`  agreed to a form: ${willFillForm}`)
+  console.log(`  want credit:      ${creditsOptIn}`)
 
   if (delivery.failed > 0) {
     console.log(`\nRun \`npm run retry-failed -- --campaign=${campaignId}\` to resend.`)
